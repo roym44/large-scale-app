@@ -1,8 +1,8 @@
 package Interop
 
 /*
-#cgo CFLAGS: -I/usr/include/python3.11
-#cgo LDFLAGS: -lpython3.11
+#cgo CFLAGS: -I/usr/include/python3.10
+#cgo LDFLAGS: -lpython3.10
 
 #include <Python.h> // Python C-API
 #include <stdlib.h>

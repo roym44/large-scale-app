@@ -394,7 +394,31 @@ cleanup:
 // Java API: public void delete(String key);
 void call_method_delete(jobject chordObject, char* key, char** out_error)
 {
+    jstring jkey = NULL;
+	JNIEnv* env;
 
+	char* error = get_env(&env);
+	if (error != NULL)
+	{
+        *out_error = error;
+		return;
+	}
+
+    // Convert the C string to Java string
+    jkey = (*env)->NewStringUTF(env, key);
+    if ((*env)->ExceptionCheck(env))
+	{
+		*out_error = get_exception_message(env);
+        goto cleanup;
+    }
+
+	(*env)->CallVoidMethod(env, chordObject, methodDelete, jkey);
+	if ((*env)->ExceptionCheck(env))
+		*out_error = get_exception_message(env);
+
+cleanup:
+    if (jkey)
+		(*env)->DeleteLocalRef(env, jkey);
 }
 
 // Java API: public String[] getAllKeys();

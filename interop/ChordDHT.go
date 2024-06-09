@@ -260,7 +260,8 @@ jobject call_chord_constructor_new_chord(char* node_name, int port, char** out_e
 	}
 
 	// Call the constructor using NewObject function
-	chordObject = (*env)->NewObject(env, chordClass, chordConstructorNewChord, jnodeName, port); if ((*env)->ExceptionCheck(env))
+	chordObject = (*env)->NewObject(env, chordClass, chordConstructorNewChord, jnodeName, port); 
+	if ((*env)->ExceptionCheck(env))
 	{
 		*out_error = get_exception_message(env);
 		goto cleanup;
@@ -425,6 +426,10 @@ cleanup:
 char** call_method_get_all_keys(jobject chordObject, char** out_error)
 {
 	jobjectArray jresult = NULL;
+	jstring jkey = NULL;
+	jsize len = 0;
+	int i = 0;
+	const char* key = NULL;
 	char** result = NULL;
 	JNIEnv* env;
 
@@ -435,9 +440,6 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 		return NULL;
 	}
 
-	jsize len;
-	int i;
-
 	jresult = (jobjectArray)(*env)->CallObjectMethod(env, chordObject, methodGetAllKeys);
 	if ((*env)->ExceptionCheck(env))
 	{
@@ -446,14 +448,45 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 	}
 
 	// Convert the Java string array to a C string array
-	len = (*env)->GetArrayLength(env, jresult);
 
-	// copy the jresult to “result”
+	// allocate the C array
+	len = (*env)->GetArrayLength(env, jresult); // get the size of the array
+	result = (char**)malloc((len + 1) * sizeof(char*));
+	
+	// TODO: necessary to check if == NULL?
+	if (result == NULL)
+	{
+		*out_error = strdup("malloc() failed");
+		goto cleanup;
+	}
 
+	result[len] = NULL; // mark the last element using NULL
+	
+	// copy the strings from the Java array to the C array
+	for (int i = 0; i < len; i++;)
+	{
+		jkey = (jstring)((*env)->GetObjectArrayElement(env, jresult, i));
+		if ((*env)->ExceptionCheck(env))
+		{
+			*out_error = get_exception_message(env);
+			goto cleanup;
+		}
 
-	// TODO: Make sure you allocate enough space!
-	// TODO: Make sure the LAST element in the array is NULL – to mark it is the end of the array
+		key = (*env)->GetStringUTFChars(env, jkey, NULL);
+		if ((*env)->ExceptionCheck(env))
+		{
+			*out_error = get_exception_message(env);
+			(*env)->DeleteLocalRef(env, jkey);
+			goto cleanup;
+		}
 
+		// duplicate C string to the result array
+		result[i] = strdup(key);
+
+		// cleanup
+		(*env)->ReleaseStringUTFChars(env, jkey, key);
+		(*env)->DeleteLocalRef(env, jkey);
+	}
 
 cleanup:
 	if (jresult) 

@@ -493,5 +493,36 @@ cleanup:
 		(*env)->DeleteLocalRef(env, jresult);
 	return result;
 }
+
+// Java API: public boolean isFirst;
+jboolean get_is_first_field(jobject chordObject, char** out_error)
+{
+	jfieldID fieldIsFirst;
+	jboolean isFirst;
+	JNIEnv* env;
+
+	char* error = get_env(&env);
+	if (error != NULL) 
+	{
+		*out_error = error;
+		return JNI_FALSE;
+	}
+	
+	fieldIsFirst = (*env)->GetFieldID(env, chordClass, "isFirst", "Z"); // "Z" is the JNI signature for boolean
+	if ((*env)->ExceptionCheck(env)) 
+	{
+		*out_error = get_exception_message(env);
+		return JNI_FALSE;
+	}
+		
+	isFirst = (*env)->GetBooleanField(env, chordObject, fieldIsFirst);
+	if ((*env)->ExceptionCheck(env)) 
+	{
+		*out_error = get_exception_message(env);
+		return JNI_FALSE;
+	}
+
+	return isFirst;
+}
 */
 import "C"

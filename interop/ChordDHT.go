@@ -21,15 +21,13 @@ char* get_env(JNIEnv** env)
 {
 	// Get the JVM environment for the current thread
 	jint res = (*jvm)->GetEnv(jvm, (void**)env, JNI_VERSION_1_6);
-	if (res == JNI_OK) // All is well, JVM is attached
+	if (res == JNI_OK) // JVM is attached
 		return NULL;
 
-	// Thread is not attached to the JVM
 	else if (res == JNI_EDETACHED)
 	{
-		// Attach the thread to the JVM
 		res = (*jvm)->AttachCurrentThread(jvm, (void **)env, NULL);
-		if (res != JNI_OK) // Failed to attach thread to JVM
+		if (res != JNI_OK)
 			return strdup("Failed to attach thread to JVM");
 		return NULL; // All is well
 	}
@@ -39,27 +37,20 @@ char* get_env(JNIEnv** env)
 
 char* get_exception_message(JNIEnv* env)
 {
-	// get the exception from the JVM
-	jthrowable exception = (*env)->ExceptionOccurred(env);
-	(*env)->ExceptionClear(env); // Clear the exception
-
-	// All exceptions in Java are Throwable,
-	// so we can cast "exception" it to Throwable
+	// clear exception	
+ 	jthrowable exception = (*env)->ExceptionOccurred(env);
+	(*env)->ExceptionClear(env);
 	jclass classThrowable = (*env)->FindClass(env, "java/lang/Throwable");
 
-	// get "String toString()" method from Throwable
+	// toString()
 	jmethodID methodToString = (*env)->GetMethodID(env, classThrowable, "toString", "()Ljava/lang/String;");
-
-	// call toString() method on the exception
 	jstring message = (jstring)(*env)->CallObjectMethod(env, exception, methodToString);
 
 	// convert to C string
 	const char* messageChars = (*env)->GetStringUTFChars(env, message, NULL);
-
-	// make a copy of the message
 	char* messageCopy = strdup(messageChars);
 
-	// clean up
+	// cleanup
 	(*env)->ReleaseStringUTFChars(env, message, messageChars);
 	(*env)->DeleteLocalRef(env, message);
 	(*env)->DeleteLocalRef(env, classThrowable);
@@ -119,6 +110,8 @@ char* load_chord_class()
 	if (error != NULL)
 		return error;
 
+	// [Java] URL url = new URL("file:///workspaces/large-scale-workshop/interop/");
+
 	jclass urlClass = (*env)->FindClass(env, "java/net/URL");
 	if (urlClass == NULL)
 	{
@@ -141,6 +134,8 @@ char* load_chord_class()
 		goto cleanup;
 	}
 
+	// [Java] URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{url});
+
 	jobjectArray urlArray = (*env)->NewObjectArray(env, 1, urlClass, urlObj); if (urlObj == NULL)
 	{
 		error = "Could not create instance of URL[]{urlObj}";
@@ -160,6 +155,8 @@ char* load_chord_class()
 		error = "Could not find URLClassLoader constructor";
 		goto cleanup;
 	}
+
+	// [Java] Class<?> chordClass = urlClassLoader.loadClass("dht.Chord");
 
 	jobject urlClassLoader = (*env)->NewObject(env, urlClassLoaderClass, urlClassLoaderConstructor, urlArray);
 	jmethodID loadClassMethod = (*env)->GetMethodID(env, urlClassLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
@@ -183,47 +180,38 @@ char* load_chord_class()
 	// set the global reference
 	chordClass = (*env)->NewGlobalRef(env, localChordClass);
 
-	// Create new Chord
+
+	// load the object methods so we can call them from Go
 	chordConstructorNewChord = (*env)->GetMethodID(env, chordClass, "<init>", "(Ljava/lang/String;I)V");
 	if ((*env)->ExceptionCheck(env))
 	{
 		error = get_exception_message(env);
 		goto cleanup;
 	}
-
-	// Join Chord
 	chordConstructorJoinChord = (*env)->GetMethodID(env, chordClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;I)V");
 	if ((*env)->ExceptionCheck(env))
 	{
 		error = get_exception_message(env);
 		goto cleanup;
 	}
-
-	// Set
 	methodSet = (*env)->GetMethodID(env, chordClass, "set", "(Ljava/lang/String;Ljava/lang/String;)V");
 	if ((*env)->ExceptionCheck(env))
 	{
 		error = get_exception_message(env);
 		goto cleanup;
 	}
-
-	// Get
 	methodGet = (*env)->GetMethodID(env, chordClass, "get", "(Ljava/lang/String;)Ljava/lang/String;");
 	if ((*env)->ExceptionCheck(env))
 	{
 		error = get_exception_message(env);
 		goto cleanup;
 	}
-
-	// Delete
 	methodDelete = (*env)->GetMethodID(env, chordClass, "delete", "(Ljava/lang/String;)V");
 	if ((*env)->ExceptionCheck(env))
 	{
 		error = get_exception_message(env);
 		goto cleanup;
 	}
-
-	// Get All Keys
 	methodGetAllKeys = (*env)->GetMethodID(env, chordClass, "getAllKeys", "()[Ljava/lang/String;");
 	if ((*env)->ExceptionCheck(env))
 	{
@@ -249,6 +237,7 @@ cleanup:
 	return error;
 }
 
+// Java API: public Chord(String node_name, int chord_port);
 jobject call_chord_constructor_new_chord(char* node_name, int port, char** out_error)
 {
     jobject chordObject = NULL;
@@ -283,6 +272,7 @@ cleanup:
 	return chordObject;
 }
 
+// Java API: public Chord(String node_name, String root_name, int chord_port);
 jobject call_chord_constructor_join_chord(char* node_name, char* root_name, int port, char** out_error)
 {
 	jobject newChordObject = NULL;
@@ -322,6 +312,7 @@ cleanup:
 	return newChordObject;
 }
 
+// Java API: public void set(String key, String val);
 void call_method_set(jobject chordObject, char* key, char* value, char** out_error)
 {
     jstring jkey = NULL;
@@ -355,6 +346,7 @@ cleanup:
 		(*env)->DeleteLocalRef(env, jvalue);
 }
 
+// Java API: public String get(String key);
 char* call_method_get(jobject chordObject, char* key, char** out_error)
 {
 	jstring jkey = NULL; 
@@ -399,11 +391,13 @@ cleanup:
 	return (char*)result;
 }
 
+// Java API: public void delete(String key);
 void call_method_delete(jobject chordObject, char* key, char** out_error)
 {
 
 }
 
+// Java API: public String[] getAllKeys();
 char** call_method_get_all_keys(jobject chordObject, char** out_error)
 {
 	jobjectArray jresult = NULL;

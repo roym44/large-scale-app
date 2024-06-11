@@ -37,7 +37,7 @@ char* get_env(JNIEnv** env)
 
 char* get_exception_message(JNIEnv* env)
 {
-	// clear exception	
+	// clear exception
  	jthrowable exception = (*env)->ExceptionOccurred(env);
 	(*env)->ExceptionClear(env);
 	jclass classThrowable = (*env)->FindClass(env, "java/lang/Throwable");
@@ -60,14 +60,19 @@ char* get_exception_message(JNIEnv* env)
 
 char* init_jvm()
 {
-	JavaVMInitArgs vm_args; // Initialization arguments vm_args.version = JNI_VERSION_1_6; // set the JNI version vm_args.nOptions = 0; // no options (like class path) vm_args.ignoreUnrecognized = 0;
+	JavaVMInitArgs vm_args; // Initialization arguments
+	vm_args.version = JNI_VERSION_1_6;
+	// set the JNI version
+	vm_args.nOptions = 0;
+	// no options (like class path)
+	vm_args.ignoreUnrecognized = 0;
 	JNIEnv* env;
 
 	int res = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-	if (res < 0) 
+	if (res < 0)
 	{
         char* error_msg;
-        switch(res) 
+        switch(res)
 		{
             case JNI_ERR:
                 error_msg = "unknown error";
@@ -91,7 +96,7 @@ char* init_jvm()
 		}
         return error_msg;
     }
-	
+
     return NULL;
 }
 
@@ -118,7 +123,7 @@ char* load_chord_class()
 		error = "Could not find URL class";
 		goto cleanup;
 	}
-	
+
 	jmethodID urlConstructor = (*env)->GetMethodID(env, urlClass, "<init>", "(Ljava/lang/String;)V");
 	if (urlConstructor == NULL)
 	{
@@ -220,19 +225,19 @@ char* load_chord_class()
 	}
 
 cleanup:
-	if (urlClass != NULL) 
+	if (urlClass != NULL)
 		(*env)->DeleteLocalRef(env, urlClass);
-	if (urlObj != NULL) 
+	if (urlObj != NULL)
 		(*env)->DeleteLocalRef(env, urlObj);
-	if (urlArray != NULL) 
+	if (urlArray != NULL)
 		(*env)->DeleteLocalRef(env, urlArray);
-	if (urlClassLoaderClass != NULL) 
-		(*env)->DeleteLocalRef(env, urlClassLoaderClass); 
-	if (urlClassLoader != NULL) 
+	if (urlClassLoaderClass != NULL)
+		(*env)->DeleteLocalRef(env, urlClassLoaderClass);
+	if (urlClassLoader != NULL)
 		(*env)->DeleteLocalRef(env, urlClassLoader);
-	if (className != NULL) 
+	if (className != NULL)
 		(*env)->DeleteLocalRef(env, className);
-	if (localChordClass != NULL) 
+	if (localChordClass != NULL)
 		(*env)->DeleteLocalRef(env, localChordClass);
 	return error;
 }
@@ -260,7 +265,7 @@ jobject call_chord_constructor_new_chord(char* node_name, int port, char** out_e
 	}
 
 	// Call the constructor using NewObject function
-	chordObject = (*env)->NewObject(env, chordClass, chordConstructorNewChord, jnodeName, port); 
+	chordObject = (*env)->NewObject(env, chordClass, chordConstructorNewChord, jnodeName, port);
 	if ((*env)->ExceptionCheck(env))
 	{
 		*out_error = get_exception_message(env);
@@ -350,8 +355,8 @@ cleanup:
 // Java API: public String get(String key);
 char* call_method_get(jobject chordObject, char* key, char** out_error)
 {
-	jstring jkey = NULL; 
-	jstring jresult = NULL; 
+	jstring jkey = NULL;
+	jstring jresult = NULL;
 	const char* result = NULL;
 	JNIEnv* env;
 
@@ -359,9 +364,9 @@ char* call_method_get(jobject chordObject, char* key, char** out_error)
 	if (error != NULL)
 	{
         *out_error = error;
-		return;
+		return error;
 	}
-	
+
 	// Convert the C string to a Java string
 	jkey = (*env)->NewStringUTF(env, key);
 	if ((*env)->ExceptionCheck(env))
@@ -452,7 +457,7 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 	// allocate the C array
 	len = (*env)->GetArrayLength(env, jresult); // get the size of the array
 	result = (char**)malloc((len + 1) * sizeof(char*));
-	
+
 	// TODO: necessary to check if == NULL?
 	if (result == NULL)
 	{
@@ -461,9 +466,9 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 	}
 
 	result[len] = NULL; // mark the last element using NULL
-	
+
 	// copy the strings from the Java array to the C array
-	for (int i = 0; i < len; i++;)
+	for (int i = 0; i < len; i++)
 	{
 		jkey = (jstring)((*env)->GetObjectArrayElement(env, jresult, i));
 		if ((*env)->ExceptionCheck(env))
@@ -489,7 +494,7 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 	}
 
 cleanup:
-	if (jresult) 
+	if (jresult)
 		(*env)->DeleteLocalRef(env, jresult);
 	return result;
 }
@@ -502,21 +507,21 @@ jboolean get_is_first_field(jobject chordObject, char** out_error)
 	JNIEnv* env;
 
 	char* error = get_env(&env);
-	if (error != NULL) 
+	if (error != NULL)
 	{
 		*out_error = error;
 		return JNI_FALSE;
 	}
-	
+
 	fieldIsFirst = (*env)->GetFieldID(env, chordClass, "isFirst", "Z"); // "Z" is the JNI signature for boolean
-	if ((*env)->ExceptionCheck(env)) 
+	if ((*env)->ExceptionCheck(env))
 	{
 		*out_error = get_exception_message(env);
 		return JNI_FALSE;
 	}
-		
+
 	isFirst = (*env)->GetBooleanField(env, chordObject, fieldIsFirst);
-	if ((*env)->ExceptionCheck(env)) 
+	if ((*env)->ExceptionCheck(env))
 	{
 		*out_error = get_exception_message(env);
 		return JNI_FALSE;
@@ -526,3 +531,158 @@ jboolean get_is_first_field(jobject chordObject, char** out_error)
 }
 */
 import "C"
+import (
+	"errors"
+	"unsafe"
+)
+
+// TODO: figure if it's the right place
+
+// structs
+
+type ChordDHT struct {
+	// holds the jobject returned from the constructor
+	instance unsafe.Pointer // Go unsafe.Pointer == C void*
+}
+
+var is_jvm_initialized bool = false
+
+func LoadJVM() error {
+	// This is not thread-safe, but it's fine for our example
+	if !is_jvm_initialized {
+		err := C.init_jvm() // Load JVM
+		if err != nil {
+			return errors.New(C.GoString(err))
+		}
+		is_jvm_initialized = true
+
+		err = C.load_chord_class() // Load Chord and its Methods
+		if err != nil {
+			return errors.New(C.GoString(err))
+		}
+	}
+	return nil
+}
+
+func NewChordDHT(rootName string, port int) (*ChordDHT, error) {
+	var out_error *C.char
+
+	rootNameC := C.CString(rootName)        // Convert Go string to C string
+	defer C.free(unsafe.Pointer(rootNameC)) // Free the C string when the function returns
+
+	// Call the C function
+	chordObject := C.call_chord_constructor_new_chord(rootNameC, C.int(port), &out_error)
+	if out_error != nil { // Check if there's an error
+		return nil, errors.New(C.GoString(out_error))
+	}
+
+	// Return the ChordDHT object
+	return &ChordDHT{instance: unsafe.Pointer(chordObject)}, nil
+}
+
+func JoinChordDHT(nodeName string, rootName string, port int) (*ChordDHT, error) {
+	var out_error *C.char
+
+	// Convert Go strings to C strings
+	nodeNameC := C.CString(nodeName)
+	defer C.free(unsafe.Pointer(nodeNameC))
+
+	rootNameC := C.CString(rootName)
+	defer C.free(unsafe.Pointer(rootNameC))
+
+	// Call the C function
+	chordObject := C.call_chord_constructor_join_chord(nodeNameC, rootNameC, C.int(port), &out_error)
+	if out_error != nil { // Check if there's an error
+		return nil, errors.New(C.GoString(out_error))
+	}
+
+	// Return the ChordDHT object
+	return &ChordDHT{instance: unsafe.Pointer(chordObject)}, nil
+}
+
+// receiver "chord" is a pointer to a ChordDHT object
+func (chord *ChordDHT) GetIsFirst() (bool, error) {
+	var out_error *C.char
+
+	// call C function
+	isFirst := C.get_is_first_field(C.jobject(chord.instance), &out_error)
+	if out_error != nil {
+		return false, errors.New(C.GoString(out_error))
+	}
+
+	// convert C boolean to Go boolean
+	if isFirst != C.JNI_FALSE {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func (chord *ChordDHT) Get(key string) (string, error) {
+	var out_error *C.char
+
+	keyC := C.CString(key)
+	defer C.free(unsafe.Pointer(keyC))
+
+	valueC := C.call_method_get(C.jobject(chord.instance), keyC, &out_error)
+	if out_error != nil {
+		return "", errors.New(C.GoString(out_error))
+	}
+
+	return C.GoString(valueC), nil
+}
+
+// func (chord *ChordDHT) GetAllKeys() ([]string, error) {
+// 	var out_error *C.char
+
+// 	keysC := C.call_method_get_all_keys(C.jobject(chord.instance), &out_error)
+// 	if out_error != nil {
+// 			return nil, errors.New(C.GoString(out_error))
+// 	}
+
+// 	// Convert the C array of strings to a Go slice of strings
+// 	keys := make([]string, 0)
+// 	var i int
+// 	for {
+// 		keyC := C.get_string_from_array(keysC, C.int(i))
+// 		if keyC == nil {
+// 			break
+// 		}
+// 		keys = append(keys, C.GoString(keyC))
+// 		C.free(unsafe.Pointer(keyC))
+// 		i++
+// 	}
+// 	C.free(unsafe.Pointer(keysC))
+// 	return keys, nil
+// }
+
+func (chord *ChordDHT) Set(key string, value string) error {
+	var out_error *C.char
+
+	keyC := C.CString(key)
+	defer C.free(unsafe.Pointer(keyC))
+
+	valueC := C.CString(value)
+	defer C.free(unsafe.Pointer(valueC))
+
+	C.call_method_set(C.jobject(chord.instance), keyC, valueC, &out_error)
+	if out_error != nil {
+		return errors.New(C.GoString(out_error))
+	}
+
+	return nil
+}
+
+func (chord *ChordDHT) Delete(key string) error {
+	var out_error *C.char
+
+	keyC := C.CString(key)
+	defer C.free(unsafe.Pointer(keyC))
+
+	C.call_method_delete(C.jobject(chord.instance), keyC, &out_error)
+	if out_error != nil {
+		return errors.New(C.GoString(out_error))
+	}
+
+	return nil
+}

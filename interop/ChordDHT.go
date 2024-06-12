@@ -529,6 +529,17 @@ jboolean get_is_first_field(jobject chordObject, char** out_error)
 
 	return isFirst;
 }
+char* delete_global_ref(void* obj)
+{
+	JNIEnv* env;
+	char* error = get_env(&env);
+	if (error != NULL)
+	{
+		return strdup(obj);
+	}
+	(*env)->DeleteGlobalRef(env, (jobject)obj);
+	return NULL;
+}
 */
 import "C"
 import (
@@ -684,5 +695,13 @@ func (chord *ChordDHT) Delete(key string) error {
 		return errors.New(C.GoString(out_error))
 	}
 
+	return nil
+}
+func(dht *ChordDHT) DeleteObject() error{
+	var out_error *C.char
+	out_error=C.delete_global_ref(unsafe.Pointer(dht.instance))
+	if out_error != nil {
+		return errors.New(C.GoString(out_error))
+	}
 	return nil
 }

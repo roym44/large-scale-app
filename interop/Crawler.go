@@ -1,3 +1,4 @@
+//go:build interop
 package Interop
 
 /*

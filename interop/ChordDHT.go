@@ -1,3 +1,4 @@
+//go:build interop
 package Interop
 
 /*
@@ -529,6 +530,7 @@ jboolean get_is_first_field(jobject chordObject, char** out_error)
 
 	return isFirst;
 }
+
 char* delete_global_ref(void* obj)
 {
 	JNIEnv* env;
@@ -643,29 +645,29 @@ func (chord *ChordDHT) Get(key string) (string, error) {
 	return C.GoString(valueC), nil
 }
 
-// func (chord *ChordDHT) GetAllKeys() ([]string, error) {
-// 	var out_error *C.char
+func (chord *ChordDHT) GetAllKeys() ([]string, error) {
+	var out_error *C.char
 
-// 	keysC := C.call_method_get_all_keys(C.jobject(chord.instance), &out_error)
-// 	if out_error != nil {
-// 			return nil, errors.New(C.GoString(out_error))
-// 	}
+	keysC := C.call_method_get_all_keys(C.jobject(chord.instance), &out_error)
+	if out_error != nil {
+			return nil, errors.New(C.GoString(out_error))
+	}
 
-// 	// Convert the C array of strings to a Go slice of strings
-// 	keys := make([]string, 0)
-// 	var i int
-// 	for {
-// 		keyC := C.get_string_from_array(keysC, C.int(i))
-// 		if keyC == nil {
-// 			break
-// 		}
-// 		keys = append(keys, C.GoString(keyC))
-// 		C.free(unsafe.Pointer(keyC))
-// 		i++
-// 	}
-// 	C.free(unsafe.Pointer(keysC))
-// 	return keys, nil
-// }
+	// Convert the C array of strings to a Go slice of strings
+	keys := make([]string, 0)
+	var i int
+	for {
+		keyC := C.get_string_from_array(keysC, C.int(i))
+		if keyC == nil {
+			break
+		}
+		keys = append(keys, C.GoString(keyC))
+		C.free(unsafe.Pointer(keyC))
+		i++
+	}
+	C.free(unsafe.Pointer(keysC))
+	return keys, nil
+}
 
 func (chord *ChordDHT) Set(key string, value string) error {
 	var out_error *C.char
@@ -697,7 +699,8 @@ func (chord *ChordDHT) Delete(key string) error {
 
 	return nil
 }
-func(dht *ChordDHT) DeleteObject() error{
+
+func (dht *ChordDHT) DeleteObject() error{
 	var out_error *C.char
 	out_error=C.delete_global_ref(unsafe.Pointer(dht.instance))
 	if out_error != nil {

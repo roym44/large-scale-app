@@ -16,7 +16,7 @@ go build -o ./output/large-scale-workshop
 ```
 cd /workspaces/large-scale-workshop/interop/
 go clean -testcache
-go test -v
+go test -v -tags=interop
 ```
 
 #### Extra installations

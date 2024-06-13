@@ -542,6 +542,11 @@ char* delete_global_ref(void* obj)
 	(*env)->DeleteGlobalRef(env, (jobject)obj);
 	return NULL;
 }
+
+char* get_string_from_array(char** array, int index)
+{
+	return array[index];
+}
 */
 import "C"
 import (
@@ -700,11 +705,13 @@ func (chord *ChordDHT) Delete(key string) error {
 	return nil
 }
 
-func (dht *ChordDHT) DeleteObject() error{
+func (dht *ChordDHT) DeleteObject() error {
 	var out_error *C.char
-	out_error=C.delete_global_ref(unsafe.Pointer(dht.instance))
+
+	out_error = C.delete_global_ref(unsafe.Pointer(dht.instance))
 	if out_error != nil {
 		return errors.New(C.GoString(out_error))
 	}
+
 	return nil
 }

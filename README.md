@@ -38,7 +38,7 @@ Next:
 ```
 go get
 go build -o ./output/large-scale-workshop
-./output/large-scale-workshop ./services/test-service/service/TestService.yaml
+./output/large-scale-workshop ./services/test-service/service/TestService.yaml // Start Server
 cd services/test-service/client/
 go test -v
 ```

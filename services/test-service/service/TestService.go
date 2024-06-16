@@ -22,7 +22,7 @@ func Start(configData []byte) error {
 		RegisterTestServiceServer(s, &testServiceImplementation{})
 	}
 	services.Start("TestService", 50051, bindgRPCToService)
-	return nil
+	return nil // TODO: Ask Zvi, should we return nil, or remove the error in signiture?
 }
 
 func (obj *testServiceImplementation) HelloWorld(_ context.Context, _ *emptypb.Empty) (res *wrapperspb.StringValue, err error) {

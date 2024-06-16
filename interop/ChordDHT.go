@@ -458,8 +458,6 @@ char** call_method_get_all_keys(jobject chordObject, char** out_error)
 	// allocate the C array
 	len = (*env)->GetArrayLength(env, jresult); // get the size of the array
 	result = (char**)malloc((len + 1) * sizeof(char*));
-
-	// TODO: necessary to check if == NULL?
 	if (result == NULL)
 	{
 		*out_error = strdup("malloc() failed");
@@ -554,10 +552,8 @@ import (
 	"unsafe"
 )
 
-// TODO: figure if it's the right place
 
 // structs
-
 type ChordDHT struct {
 	// holds the jobject returned from the constructor
 	instance unsafe.Pointer // Go unsafe.Pointer == C void*

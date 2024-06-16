@@ -1,2 +1,3 @@
-package test-service
+package TestService
+
 func init() {}

@@ -34,6 +34,14 @@ protoc -I=. \
        --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/testservice/TestService.proto \
        TestService.proto
 ```
+Next:
+```
+go get
+go build -o ./output/large-scale-workshop
+./output/large-scale-workshop ./services/test-service/service/TestService.yaml
+cd services/test-service/client/
+go test -v
+```
 
 #### Extra installations
 ```

@@ -15,3 +15,13 @@ func TestHelloWorld(t *testing.T) {
 	}
 	t.Logf("Response: %v", r)
 }
+
+func TestHelloToUser(t *testing.T) {
+	c := NewTestServiceClient("localhost:50051")
+	r, err := c.HelloToUser("Zvi")
+	if err != nil {
+		t.Fatalf("could not call HelloToUser: %v", err)
+		return
+	}
+	t.Logf("Response: %v", r)
+}

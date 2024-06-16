@@ -8,6 +8,7 @@ import (
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type TestServiceClient struct {
@@ -34,3 +35,16 @@ func (obj *TestServiceClient) HelloWorld() (string, error) {
 	return r.Value, nil
 }
 
+func (obj *TestServiceClient) HelloToUser(userName string) (string, error) {
+	c, closeFunc, err := obj.Connect()
+	if err != nil {
+		return "", fmt.Errorf("could not connect to server: %v", err)
+	}
+	defer closeFunc()
+	// Call the HelloWorld RPC function
+	r, err := c.HelloToUser(context.Background(), wrapperspb.String(userName))
+	if err != nil {
+		return "", fmt.Errorf("could not call HelloToUser: %v", err)
+	}
+	return r.Value, nil
+}

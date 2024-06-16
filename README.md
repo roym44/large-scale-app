@@ -3,7 +3,7 @@
 Large Scale Workshop
 
 ## General Notes
-- the image mounts the large-scale-workshop directory into: `/workspaces/large-scale-workshop/`
+- the image mounts the large-scale-workshop directory into: `/workspaces/<cloned-repo-name>/`
 - some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
 - our "module name" is `github.com/TAULargeScaleWorkshop/RLAD`
 
@@ -34,13 +34,15 @@ protoc -I=. \
        --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/testservice/TestService.proto \
        TestService.proto
 ```
-Next:
+Next, to run the server:
 ```
 go get
 go build -o ./output/large-scale-workshop
 ./output/large-scale-workshop ./services/test-service/service/TestService.yaml // Start Server
-cd services/test-service/client/
-go test -v
+```
+And test the client:
+```
+cd services/test-service/client/ && go test -v
 ```
 
 #### Extra installations

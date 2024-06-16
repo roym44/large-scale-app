@@ -4,6 +4,7 @@ Large Scale Workshop
 
 ## General Notes
 - the image mounts the large-scale-workshop directory into: `/workspaces/large-scale-workshop/`
+- some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
 
 ### Section 1 - running main.go
 ```

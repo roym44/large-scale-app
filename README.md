@@ -5,6 +5,7 @@ Large Scale Workshop
 ## General Notes
 - the image mounts the large-scale-workshop directory into: `/workspaces/large-scale-workshop/`
 - some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
+- our "module name" is `github.com/TAULargeScaleWorkshop/RLAD`
 
 ### Section 1 - running main.go
 ```
@@ -27,10 +28,10 @@ cd /workspaces/large-scale-workshop/services/test-service/common
 protoc -I=. \
        --go_out=. \
        --go_opt=paths=source_relative \
-       --go_opt=MTestService.proto=large-scale-workshop/services/test-service \
+       --go_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/test-service \
        --go-grpc_out=. \
        --go-grpc_opt=paths=source_relative \
-       --go-grpc_opt=MTestService.proto=large-scale-workshop/services/testservice/TestService.proto \
+       --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/testservice/TestService.proto \
        TestService.proto
 ```
 

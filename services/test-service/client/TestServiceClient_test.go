@@ -44,3 +44,18 @@ func TestStoreGet(t *testing.T) {
 	}
 	t.Logf("Response: %v", r)
 }
+
+func TestWaitAndRand(t *testing.T) {
+	c := NewTestServiceClient("localhost:50051")
+	resPromise, err := c.WaitAndRand(3)
+	if err != nil {
+		t.Fatalf("Calling WaitAndRand failed: %v", err)
+		return
+	}
+	res, err := resPromise()
+	if err != nil {
+		t.Fatalf("WaitAndRand failed: %v", err)
+		return
+	}
+	t.Logf("Returned random number: %v\n", res)
+}

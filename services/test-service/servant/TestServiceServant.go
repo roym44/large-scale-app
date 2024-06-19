@@ -22,3 +22,8 @@ func Get(key string) (string,bool) {
     value,ok:=cacheMap[key]
     return value,ok
 }
+
+func WaitAndRand(seconds int32, sendToClient func(x int32) error) error {
+    time.Sleep(time.Duration(seconds) * time.Second)
+    return sendToClient(int32(rand.Intn(10)))
+}

@@ -49,3 +49,12 @@ func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.S
 	}
 	return wrapperspb.String(value), nil
 }
+
+func (obj *testServiceImplementation) WaitAndRand(seconds
+	*wrapperspb.Int32Value, streamRet TestService_WaitAndRandServer) error {
+	Logger.Printf("WaitAndRand called")
+	streamClient := func(x int32) error {
+		return streamRet.Send(wrapperspb.Int32(x))
+	}
+	return TestServiceServant.WaitAndRand(seconds.Value, streamClient)
+	}

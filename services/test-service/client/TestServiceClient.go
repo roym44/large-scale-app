@@ -71,7 +71,24 @@ func (obj *TestServiceClient) Get(key string) (string, error) {
 	// Call the Get RPC function
 	r, err := c.Get(context.Background(), wrapperspb.String(key))
 	if err != nil {
-		return "",fmt.Errorf("could not call Store: %v", err)
+		return "",fmt.Errorf("could not call Get: %v", err)
 	}
 	return r.Value, nil
 }
+
+func (obj *TestServiceClient) WaitAndRand(seconds int32) (func() (int32,error), error) {
+	c, closeFunc, err := obj.Connect()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect %v. Error: %v", obj.Address,err)
+	}
+	r, err := c.WaitAndRand(context.Background(), wrapperspb.Int32(seconds))
+	if err != nil {
+		return nil, fmt.Errorf("could not call Get: %v", err)
+	}
+	res := func() (int32, error) {
+		defer closeFunc()
+		x, err := r.Recv()
+		return x.Value, err
+	}
+	return res, nil
+	}

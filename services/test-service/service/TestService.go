@@ -34,3 +34,18 @@ func (obj *testServiceImplementation) HelloToUser(_ context.Context, userName *w
 	Logger.Printf("HelloToUser called")
 	return wrapperspb.String(TestServiceServant.HelloToUser(userName.Value)), nil
 }
+
+func (obj *testServiceImplementation) Store(ctx context.Context, req *StoreKeyValue) (_ *emptypb.Empty, err error) {
+	Logger.Printf("Store called with key: %s, value: %s",req.Key,req.Value)
+	TestServiceServant.Store(req.Key,req.Value)
+	return &emptypb.Empty{}, nil
+}
+
+func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.StringValue) (res *wrapperspb.StringValue, err error) {
+	Logger.Printf("Get called with key: %s",key.Value)
+	value,ok:=TestServiceServant.Get(key.Value)
+	if(ok!=nil){
+		return nil, fmt.Errorf("key not found: %v", key.Value)
+	}
+	return wrapperspb.String(value), nil
+}

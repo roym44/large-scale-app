@@ -29,5 +29,5 @@ func WaitAndRand(seconds int32, sendToClient func(x int32) error) error {
 }
 
 func IsAlive() (bool) {
-return true
+	return true
 }

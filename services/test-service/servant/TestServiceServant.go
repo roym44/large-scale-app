@@ -27,3 +27,7 @@ func WaitAndRand(seconds int32, sendToClient func(x int32) error) error {
     time.Sleep(time.Duration(seconds) * time.Second)
     return sendToClient(int32(rand.Intn(10)))
 }
+
+func IsAlive() (bool) {
+return true
+}

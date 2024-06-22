@@ -50,11 +50,15 @@ func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.S
 	return wrapperspb.String(value), nil
 }
 
-func (obj *testServiceImplementation) WaitAndRand(seconds
-	*wrapperspb.Int32Value, streamRet TestService_WaitAndRandServer) error {
+func (obj *testServiceImplementation) WaitAndRand(seconds *wrapperspb.Int32Value, streamRet TestService_WaitAndRandServer) error {
 	Logger.Printf("WaitAndRand called")
 	streamClient := func(x int32) error {
 		return streamRet.Send(wrapperspb.Int32(x))
 	}
 	return TestServiceServant.WaitAndRand(seconds.Value, streamClient)
-	}
+}
+
+func (obj *testServiceImplementation) IsAlive(ctxt context.Context, _ *emptypb.Empty) (res *wrapperspb.BoolValue, err error) {
+	Logger.Printf("IsAlive called")
+	return wrapperspb.Bool(TestServiceServant.IsAlive()), nil
+}

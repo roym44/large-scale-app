@@ -91,4 +91,18 @@ func (obj *TestServiceClient) WaitAndRand(seconds int32) (func() (int32,error), 
 		return x.Value, err
 	}
 	return res, nil
+}
+
+func (obj *TestServiceClient) IsAlive() (bool, error) {
+	c, closeFunc, err := obj.Connect()
+	if err != nil {
+		return false, fmt.Errorf("could not connect to server: %v", err)
 	}
+	defer closeFunc()
+	// Call the IsAlive RPC function
+	r, err := c.IsAlive(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return false, fmt.Errorf("could not call IsAlive: %v", err)
+	}
+	return r.Value, nil
+}

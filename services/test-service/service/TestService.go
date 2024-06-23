@@ -59,3 +59,9 @@ func (obj *testServiceImplementation) IsAlive(ctxt context.Context, _ *emptypb.E
 	Logger.Printf("IsAlive called")
 	return wrapperspb.Bool(TestServiceServant.IsAlive()), nil
 }
+
+func (obj *testServiceImplementation) ExtractLinksFromURL(ctx context.Context, url *ExtractLinksFromURLParameters) (res *ExtractLinksFromURLReturnedValue, err error) {
+	Logger.Printf("ExtractLinksFromURL called with url: %s", url.Url)
+	value, err := TestServiceServant.ExtractLinksFromURL(url.Url, url.Depth)
+	return &ExtractLinksFromURLReturnedValue{Links: value}, err
+}

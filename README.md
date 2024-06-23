@@ -51,3 +51,17 @@ go test -v
 sudo apt-get update && sudo apt-get install -y python3.11-dev
 python3.11 -m pip install beautifulsoup4 requests
 ```
+
+### Section 4
+First, compiling IDL into Go protocol buffers code and gRPC to generate `RegService.pb.go` and `RegService_grpc.pb.go`
+```
+cd /workspaces/RLAD/services/reg-service/common
+protoc -I=. \
+       --go_out=. \
+       --go_opt=paths=source_relative \
+       --go_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/reg-service \
+       --go-grpc_out=. \
+       --go-grpc_opt=paths=source_relative \
+       --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/regservice/RegService.proto \
+       RegService.proto
+```

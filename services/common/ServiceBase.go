@@ -24,7 +24,7 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 }
 
 func Start(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) {
-	_, grpcServer, startListening := startgRPC(grpcListenPort) // TODO: First param was listeningAddress
+	_, grpcServer, startListening := startgRPC(grpcListenPort)
 	bindgRPCToService(grpcServer)
 	startListening()
 }

@@ -2,7 +2,6 @@ package TestService
 
 import (
 	"context"
-	"fmt"
 
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
@@ -23,7 +22,7 @@ func Start(configData []byte) error {
 		RegisterTestServiceServer(s, &testServiceImplementation{})
 	}
 	services.Start("TestService", 50051, bindgRPCToService)
-	return nil // TODO: Ask Zvi, should we return nil, or remove the error in signiture?
+	return nil
 }
 
 func (obj *testServiceImplementation) HelloWorld(ctxt context.Context, _ *emptypb.Empty) (res *wrapperspb.StringValue, err error) {
@@ -44,11 +43,8 @@ func (obj *testServiceImplementation) Store(ctx context.Context, req *StoreKeyVa
 
 func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.StringValue) (res *wrapperspb.StringValue, err error) {
 	Logger.Printf("Get called with key: %s", key.Value)
-	value, ok := TestServiceServant.Get(key.Value)
-	if !ok {
-		return nil, fmt.Errorf("key not found: %v", key.Value)
-	}
-	return wrapperspb.String(value), nil
+	value, err := TestServiceServant.Get(key.Value)
+	return wrapperspb.String(value), err
 }
 
 func (obj *testServiceImplementation) WaitAndRand(seconds *wrapperspb.Int32Value, streamRet TestService_WaitAndRandServer) error {

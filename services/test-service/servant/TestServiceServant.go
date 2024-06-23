@@ -23,10 +23,13 @@ func Store(key string, value string) {
 	cacheMap[key] = value
 }
 
-func Get(key string) (string, bool) {
+func Get(key string) (string, error) {
 	// returns the value (or "" if not found), and a boolean indicating whether the key was found in the map
 	value, ok := cacheMap[key]
-	return value, ok
+	if !ok {
+		return value, fmt.Errorf("key not found: %v", key)
+	}
+	return value, nil
 }
 
 func WaitAndRand(seconds int32, sendToClient func(x int32) error) error {

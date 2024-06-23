@@ -38,11 +38,12 @@ Next, to run the server:
 ```
 go get
 go build -o ./output/large-scale-workshop
-./output/large-scale-workshop ./services/test-service/service/TestService.yaml // Start Server
+./output/large-scale-workshop ./services/test-service/service/TestService.yaml
 ```
 And test the client:
 ```
-cd services/test-service/client/ && go test -v
+cd /workspaces/large-scale-workshop/services/test-service/client/
+go test -v
 ```
 
 #### Extra installations

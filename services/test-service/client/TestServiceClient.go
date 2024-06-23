@@ -17,8 +17,8 @@ type TestServiceClient struct {
 
 func NewTestServiceClient(address string) *TestServiceClient {
 	return &TestServiceClient{
-		ServiceClientBase: services.ServiceClientBase[service.TestServiceClient]{Address: address,
-			CreateClient: service.NewTestServiceClient},
+		ServiceClientBase: services.ServiceClientBase[service.TestServiceClient]{
+			Address: address, CreateClient: service.NewTestServiceClient},
 	}
 }
 func (obj *TestServiceClient) HelloWorld() (string, error) {
@@ -48,14 +48,14 @@ func (obj *TestServiceClient) HelloToUser(userName string) (string, error) {
 	}
 	return r.Value, nil
 }
-func (obj *TestServiceClient) Store(key,value string) error {
+func (obj *TestServiceClient) Store(key string, value string) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
 		return fmt.Errorf("could not connect to server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Store RPC function
-	_, err := c.Store(context.Background(), &service.StoreKeyValue{Key:key, Value:value})
+	_, err = c.Store(context.Background(), &service.StoreKeyValue{Key: key, Value: value})
 	if err != nil {
 		return fmt.Errorf("could not call Store: %v", err)
 	}
@@ -65,21 +65,21 @@ func (obj *TestServiceClient) Store(key,value string) error {
 func (obj *TestServiceClient) Get(key string) (string, error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return "",fmt.Errorf("could not connect to server: %v", err)
+		return "", fmt.Errorf("could not connect to server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Get RPC function
 	r, err := c.Get(context.Background(), wrapperspb.String(key))
 	if err != nil {
-		return "",fmt.Errorf("could not call Get: %v", err)
+		return "", fmt.Errorf("could not call Get: %v", err)
 	}
 	return r.Value, nil
 }
 
-func (obj *TestServiceClient) WaitAndRand(seconds int32) (func() (int32,error), error) {
+func (obj *TestServiceClient) WaitAndRand(seconds int32) (func() (int32, error), error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect %v. Error: %v", obj.Address,err)
+		return nil, fmt.Errorf("failed to connect %v. Error: %v", obj.Address, err)
 	}
 	r, err := c.WaitAndRand(context.Background(), wrapperspb.Int32(seconds))
 	if err != nil {

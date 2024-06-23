@@ -1,9 +1,7 @@
-package TestServiceClient // TODO: Ask Zvi regarding package naming, and import cycle
+package TestServiceClient
 
 import (
 	"testing"
-
-	// client "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/client/TestServiceClient"
 )
 
 func TestHelloWorld(t *testing.T) {
@@ -26,9 +24,9 @@ func TestHelloToUser(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
-func TestStoreGet(t *testing.T) {
+func TestStoreAndGet(t *testing.T) {
 	c := NewTestServiceClient("localhost:50051")
-	err := c.Store("key1","value1")
+	err := c.Store("key1", "value1")
 	if err != nil {
 		t.Fatalf("could not call Store: %v", err)
 		return
@@ -38,8 +36,8 @@ func TestStoreGet(t *testing.T) {
 		t.Fatalf("could not call Get: %v", err)
 		return
 	}
-	if(r!="value1"){
-		t.Fatalf("wrong value: received %s, expected value1",r)
+	if r != "value1" {
+		t.Fatalf("wrong value: received %s, expected value1", r)
 		return
 	}
 	t.Logf("Response: %v", r)
@@ -60,14 +58,14 @@ func TestWaitAndRand(t *testing.T) {
 	t.Logf("Returned random number: %v\n", res)
 }
 
-func TestHelloWorld(t *testing.T) {
+func TestIsAlive(t *testing.T) {
 	c := NewTestServiceClient("localhost:50051")
 	r, err := c.IsAlive()
 	if err != nil {
 		t.Fatalf("could not call IsAlive: %v", err)
 		return
 	}
-	if !r{
+	if !r {
 		t.Fatalf("IsAlive returned false")
 		return
 	}

@@ -1,4 +1,5 @@
 //go:build interop
+
 package Interop
 
 import (
@@ -125,7 +126,7 @@ func TestChordDHT(t *testing.T) {
 	if err != nil {
 		t.Fatalf("root.GetAllKeys failed with error: %v", err)
 	}
-	
+
 	if len(keys) != 2 {
 		t.Fatalf("root.GetAllKeys returned %d keys, expected 2", len(keys))
 	}

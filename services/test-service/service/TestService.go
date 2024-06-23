@@ -2,6 +2,7 @@ package TestService
 
 import (
 	"context"
+	"fmt"
 
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
@@ -36,15 +37,15 @@ func (obj *testServiceImplementation) HelloToUser(_ context.Context, userName *w
 }
 
 func (obj *testServiceImplementation) Store(ctx context.Context, req *StoreKeyValue) (_ *emptypb.Empty, err error) {
-	Logger.Printf("Store called with key: %s, value: %s",req.Key,req.Value)
-	TestServiceServant.Store(req.Key,req.Value)
+	Logger.Printf("Store called with key: %s, value: %s", req.Key, req.Value)
+	TestServiceServant.Store(req.Key, req.Value)
 	return &emptypb.Empty{}, nil
 }
 
 func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.StringValue) (res *wrapperspb.StringValue, err error) {
-	Logger.Printf("Get called with key: %s",key.Value)
-	value,ok:=TestServiceServant.Get(key.Value)
-	if(ok!=nil){
+	Logger.Printf("Get called with key: %s", key.Value)
+	value, ok := TestServiceServant.Get(key.Value)
+	if !ok {
 		return nil, fmt.Errorf("key not found: %v", key.Value)
 	}
 	return wrapperspb.String(value), nil

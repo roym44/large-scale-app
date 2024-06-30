@@ -6,6 +6,7 @@ import (
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	TestService "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/service"
+	RegService "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/service"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"gopkg.in/yaml.v2"
 )
@@ -34,6 +35,9 @@ func main() {
 	case "TestService":
 		utils.Logger.Printf("Loading service type: %v\n", config.Type)
 		TestService.Start(configData)
+	case "RegService":
+		utils.Logger.Printf("Loading service type: %v\n", config.Type)
+		RegService.Start(configData)
 	default:
 		utils.Logger.Fatalf("Unknown configuration type: %v", config.Type)
 		os.Exit(4)

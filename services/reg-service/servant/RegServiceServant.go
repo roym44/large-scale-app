@@ -2,6 +2,7 @@ package TestServiceServant
 
 import (
 	"fmt"
+	"sync"
 	"math/rand"
 	"time"
 
@@ -10,10 +11,15 @@ import (
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 )
 
-var cacheMap map[string][]string
+var (
+    cacheMap map[string][]string
+    fails    map[string]int
+    mu       sync.Mutex
+)
 
 func init() {
 	cacheMap = make(map[string][]string)
+	fails = make(map[string]int)
 
 }
 
@@ -51,4 +57,35 @@ func Discover(service_name string) ([]string, error) {
 		return value, fmt.Errorf("service not found: %v", service_name)
 	}
 	return value, nil
+}
+//TODO:implement IsAlive
+func IsAliveCheck() {
+    ticker := time.NewTicker(10 * time.Second)
+    defer ticker.Stop()
+    for range ticker.C {
+        for serviceName, addresses := range cacheMap {
+            for _, address := range addresses {
+				mu.Lock()
+                alive, err := IsAlive(address)
+                if err != nil {
+                    utils.Logger.Printf("IsAlive check failed for address %s: %v\n", address, err)
+					mu.Unlock()
+					continue
+                } else if !alive {
+                    count := fails[address]
+                    count++
+                    if count >= 2 {
+                        Unregister(serviceName, address)
+                        delete(fails, address)
+                        utils.Logger.Printf("Node %s unregistered from service\n", address, serviceName)
+                    } else {
+                        fails[address] = count
+                    }
+                } else {
+                    delete(fails, address)
+                }
+				mu.Unlock()
+            }
+        }
+    }
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
 )
@@ -27,4 +28,15 @@ func Start(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc
 	_, grpcServer, startListening := startgRPC(grpcListenPort)
 	bindgRPCToService(grpcServer)
 	startListening()
+}
+
+func registerAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
+	regClient := RegServiceClient.NewRegServiceClient(regAddresses)
+	err := regClient.Register(serviceName, listeningAddress)
+	if err != nil {
+		Logger.Fatalf("Failed to register to registry service: %v", err)
+	}
+	return func() {
+		regClient.Unregister(serviceName, listeningAddress)
+	}
 }

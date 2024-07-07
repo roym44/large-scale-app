@@ -21,7 +21,8 @@ func Start(configData []byte) error {
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterTestServiceServer(s, &testServiceImplementation{})
 	}
-	services.Start("TestService", 50051, bindgRPCToService)
+	services.Start("TestService", 0, bindgRPCToService) // Randomly pick a port
+	
 	return nil
 }
 

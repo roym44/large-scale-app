@@ -1,4 +1,4 @@
-package TestServiceServant
+package RegServiceServant
 
 import (
 	"fmt"

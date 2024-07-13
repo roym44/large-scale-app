@@ -65,3 +65,9 @@ protoc -I=. \
        --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/regservice/RegService.proto \
        RegService.proto
 ```
+
+make sure you get the correct version of MetaFFI, run at the root directory of the project:
+```
+go get github.com/MetaFFI/lang-plugin-go@v0.1.2
+go mod tidy
+```

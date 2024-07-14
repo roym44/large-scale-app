@@ -15,10 +15,10 @@ type TestServiceClient struct {
 	services.ServiceClientBase[service.TestServiceClient]
 }
 
-func NewTestServiceClient(address string) *TestServiceClient {
+func NewTestServiceClient(addresses []string) *TestServiceClient {
 	return &TestServiceClient{
 		ServiceClientBase: services.ServiceClientBase[service.TestServiceClient]{
-			Address: address, CreateClient: service.NewTestServiceClient},
+			RegistryAddresses: addresses, CreateClient: service.NewTestServiceClient},
 	}
 }
 func (obj *TestServiceClient) HelloWorld() (string, error) {

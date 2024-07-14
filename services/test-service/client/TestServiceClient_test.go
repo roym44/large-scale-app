@@ -3,7 +3,7 @@ package TestServiceClient
 import (
 	"testing"
 )
-
+// TODO: update tests to pass addresses []string from config
 func TestHelloWorld(t *testing.T) {
 	c := NewTestServiceClient("localhost:50051")
 	r, err := c.HelloWorld()

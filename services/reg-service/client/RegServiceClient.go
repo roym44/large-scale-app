@@ -4,18 +4,32 @@ import (
 	context "context"
 	"fmt"
 
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
+	"google.golang.org/grpc"
 )
 
+// Note: Code Duplication to prevent importing ServiceClientBase creating an import cycle
 type RegServiceClient struct {
-	services.ServiceClientBase[service.RegServiceClient]
+	RegistryAddresses []string
+	CreateClient      func(grpc.ClientConnInterface) service.RegServiceClient
 }
 
-func NewRegServiceClient(address string) *RegServiceClient {
+
+
+func (obj *RegServiceClient) Connect() (res service.RegServiceClient, closeFunc func(), err error) {
+	// TODO: we currently take the first reg address
+	conn, err := grpc.Dial(obj.RegistryAddresses[0], grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		var empty service.RegServiceClient
+		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.RegistryAddresses[0], err)
+	}
+	c := obj.CreateClient(conn)
+	return c, func() { conn.Close() }, nil
+}
+
+func NewRegServiceClient(addresses []string) *RegServiceClient {
 	return &RegServiceClient{
-		ServiceClientBase: services.ServiceClientBase[service.RegServiceClient]{
-			Address: address, CreateClient: service.NewRegServiceClient},
+		RegistryAddresses: addresses, CreateClient: service.NewRegServiceClient,
 	}
 }
 

@@ -3,11 +3,14 @@ package TestService
 import (
 	"context"
 
+	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *
 
+	"time"
+	"gopkg.in/yaml.v2"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -21,8 +24,33 @@ func Start(configData []byte) error {
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterTestServiceServer(s, &testServiceImplementation{})
 	}
-	services.Start("TestService", 0, bindgRPCToService) // Randomly pick a port
-	
+	var config config.TestConfig
+	err := yaml.Unmarshal(configData, &config) // parses YAML
+	if err != nil {
+		Logger.Fatalf("error unmarshaling data: %v", err)
+	}
+
+	errCh := make(chan error, 1)
+	var listeningAddress string
+
+	go func() {
+		err := services.Start("TestService", 0, &listeningAddress, bindgRPCToService) // Randomly pick a port
+		errCh <- err
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return err
+		}
+	default:
+		unregister := services.RegisterAddress()
+		// unregister := services.registerAddress("TestService", config.RegistryAddresses, listeningAddress)
+		defer unregister()
+	}
+
 	return nil
 }
 

@@ -9,10 +9,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server, startListening func()) {
+func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server, startListening func(), err error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", listenPort))
 	if err != nil {
 		Logger.Fatalf("failed to listen: %v", err)
+		return "", nil, nil, err
 	}
 	listeningAddress = lis.Addr().String()
 	grpcServer = grpc.NewServer()
@@ -24,13 +25,18 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 	return
 }
 
-func Start(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) {
-	_, grpcServer, startListening := startgRPC(grpcListenPort)
+func Start(serviceName string, grpcListenPort int, addressPtr *string, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
+	if err != nil {
+		return err
+	}
 	bindgRPCToService(grpcServer)
+	*addressPtr = listeningAddress
 	startListening()
+	return nil
 }
 
-func registerAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
+func RegisterAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
 	regClient := RegServiceClient.NewRegServiceClient(regAddresses)
 	err := regClient.Register(serviceName, listeningAddress)
 	if err != nil {

@@ -2,12 +2,15 @@ package RegService
 
 import (
 	"context"
+	"fmt"
 
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
 	RegServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
+	"github.com/TAULargeScaleWorkshop/RLAD/config"
 
+	"gopkg.in/yaml.v2"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -18,13 +21,22 @@ type regServiceImplementation struct {
 }
 
 func Start(configData []byte) error {
-	// TODO: use listen_port from config
-	// TODO: try the first one (8502) then 8503, 8504...
+	var config config.RegConfig
+	err := yaml.Unmarshal(configData, &config) // parses YAML
+	if err != nil {
+		Logger.Fatalf("error unmarshaling data: %v", err)
+	}
+
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterRegServiceServer(s, &regServiceImplementation{})
 	}
-	services.Start("RegistryService", 8502, bindgRPCToService)
-	return nil
+	var listening_address string
+	for port := config.ListenPort; port < config.ListenPort + 10; port++ {
+		services.Start("RegistryService", port, &listening_address, bindgRPCToService)
+		// will return only if failed to connect
+	}
+	Logger.Fatalf("Failed to connect to all the registry servers")
+	return fmt.Errorf("Failed to connect to all the registry servers")
 }
 
 func (obj *regServiceImplementation) Register(_ context.Context, params *UpdateRegistryParameters) (_ *emptypb.Empty, err error) {

@@ -18,6 +18,8 @@ type regServiceImplementation struct {
 }
 
 func Start(configData []byte) error {
+	// TODO: use listen_port from config
+	// TODO: try the first one (8502) then 8503, 8504...
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterRegServiceServer(s, &regServiceImplementation{})
 	}
@@ -42,4 +44,3 @@ func (obj *regServiceImplementation) Discover(_ context.Context, service_name *w
 	value, err := RegServiceServant.Discover(service_name.Value)
 	return &DiscoveredServers{Addresses: value}, err
 }
-

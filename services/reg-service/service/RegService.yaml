@@ -1,1 +1,2 @@
 type: "RegService"
+listen_port: 8502

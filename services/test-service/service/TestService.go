@@ -9,11 +9,10 @@ import (
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *
 
-	"time"
-	"gopkg.in/yaml.v2"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"gopkg.in/yaml.v2"
 )
 
 type testServiceImplementation struct {
@@ -21,35 +20,18 @@ type testServiceImplementation struct {
 }
 
 func Start(configData []byte) error {
-	bindgRPCToService := func(s grpc.ServiceRegistrar) {
-		RegisterTestServiceServer(s, &testServiceImplementation{})
-	}
+	// get config
 	var config config.TestConfig
 	err := yaml.Unmarshal(configData, &config) // parses YAML
 	if err != nil {
 		Logger.Fatalf("error unmarshaling data: %v", err)
 	}
 
-	errCh := make(chan error, 1)
-	var listeningAddress string
-
-	go func() {
-		err := services.Start("TestService", 0, &listeningAddress, bindgRPCToService) // Randomly pick a port
-		errCh <- err
-	}()
-
-	time.Sleep(1 * time.Second)
-
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return err
-		}
-	default:
-		unregister := services.RegisterAddress()
-		// unregister := services.registerAddress("TestService", config.RegistryAddresses, listeningAddress)
-		defer unregister()
+	// start service
+	bindgRPCToService := func(s grpc.ServiceRegistrar) {
+		RegisterTestServiceServer(s, &testServiceImplementation{})
 	}
+	services.Start("TestService", 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
 
 	return nil
 }

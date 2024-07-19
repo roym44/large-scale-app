@@ -3,26 +3,56 @@ package RegService
 import (
 	"context"
 	"fmt"
+	"net"
 
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
 	RegServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
-	"github.com/TAULargeScaleWorkshop/RLAD/config"
 
-	"gopkg.in/yaml.v2"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"gopkg.in/yaml.v2"
 )
 
 type regServiceImplementation struct {
 	UnimplementedRegServiceServer
 }
 
+// Note: Code Duplication to prevent importing ServiceBase
+func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server, startListening func(), err error) {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", listenPort))
+	if err != nil {
+		Logger.Fatalf("failed to listen: %v", err)
+		return "", nil, nil, err
+	}
+	listeningAddress = lis.Addr().String()
+	grpcServer = grpc.NewServer()
+	startListening = func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			Logger.Fatalf("failed to serve: %v", err)
+		}
+	}
+	return
+}
+
+// Note: copy of ServiceBase::Start() without the regAddresses parameter (not needed)
+func startRegService(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+	// start the service
+	_, grpcServer, startListening, err := startgRPC(grpcListenPort)
+	if err != nil {
+		return err
+	}
+	bindgRPCToService(grpcServer)
+	startListening()
+	return nil
+}
+
 func Start(configData []byte) error {
+	// get config
 	var config config.RegConfig
-	err := yaml.Unmarshal(configData, &config) // parses YAML
+	err := yaml.Unmarshal(configData, &config)
 	if err != nil {
 		Logger.Fatalf("error unmarshaling data: %v", err)
 	}
@@ -30,10 +60,12 @@ func Start(configData []byte) error {
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterRegServiceServer(s, &regServiceImplementation{})
 	}
-	var listening_address string
-	for port := config.ListenPort; port < config.ListenPort + 10; port++ {
-		services.Start("RegistryService", port, &listening_address, bindgRPCToService)
-		// will return only if failed to connect
+	for port := config.ListenPort; port < config.ListenPort+10; port++ {
+		err = startRegService("RegistryService", port, bindgRPCToService)
+		// will reach here only if failed to connect
+		if err != nil {
+			Logger.Printf("startRegService failed %v for port %s ", err, port)
+		}
 	}
 	Logger.Fatalf("Failed to connect to all the registry servers")
 	return fmt.Errorf("Failed to connect to all the registry servers")

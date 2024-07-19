@@ -25,18 +25,24 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 	return
 }
 
-func Start(serviceName string, grpcListenPort int, addressPtr *string, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+// regAddresses - the registry service addresses to connect to (for all the services who aren't the registry)
+func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+	// start the service
 	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
 	if err != nil {
 		return err
 	}
 	bindgRPCToService(grpcServer)
-	*addressPtr = listeningAddress
+
+	// make sure it registers to the registry service
+	unregister := registerAddress(serviceName, regAddresses, listeningAddress)
+	defer unregister()
+
 	startListening()
 	return nil
 }
 
-func RegisterAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
+func registerAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
 	regClient := RegServiceClient.NewRegServiceClient(regAddresses)
 	err := regClient.Register(serviceName, listeningAddress)
 	if err != nil {

@@ -23,6 +23,7 @@ func init() {
 
 }
 
+// Registry API
 func Register(service_name string, node_address string) {
 	if cacheMap[service_name] != nil {
 		for _, node := range cacheMap[service_name] {
@@ -63,13 +64,17 @@ func Discover(service_name string) ([]string, error) {
 	return addresses, nil
 }
 
+// TODO: figure out a way to connect to any node - with a promise it implements IsAlive(), and add goroutine for this check
+// TODO: notice that we can't use NewTestServiceClient, we need to generically support a grpc server with IsAlive(), maybe new proto...
+
+// Internal logic, health checking the nodes
 func IsAliveCheck() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
 		for serviceName, nodes := range cacheMap {
 			for i, node := range nodes {
-				c := NewTestServiceClient(node.Address)
+				c := NewTestServiceClient(nil, "nil")
 				alive, err := c.IsAlive()
 				// we assume that (!alive) iff (err != nil) in IsAlive implementation
 				if !alive {

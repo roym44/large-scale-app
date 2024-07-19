@@ -38,7 +38,7 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 }
 
 // Note: copy of ServiceBase::Start() without the regAddresses parameter (not needed)
-func startRegService(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
 	// start the service
 	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
 	if err != nil {
@@ -62,7 +62,7 @@ func Start(configData []byte) error {
 		RegisterRegServiceServer(s, &regServiceImplementation{})
 	}
 	for port := config.ListenPort; port < config.ListenPort+10; port++ {
-		err = startRegService("RegistryService", port, bindgRPCToService)
+		err = startRegService(port, bindgRPCToService)
 		// will reach here only if failed to connect
 		if err != nil {
 			Logger.Printf("startRegService failed %v for port %s ", err, port)

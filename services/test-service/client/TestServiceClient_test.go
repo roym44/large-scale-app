@@ -15,18 +15,27 @@ var conf config.TestConfig
 // TestMain is the entry point for testing
 func TestMain(m *testing.M) {
 	// Load the configuration
-	configFile := "../TestService.yaml"
+	configFile := "../service/TestService.yaml"
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatalf("error reading file: %v", err)
 		os.Exit(2)
 	}
 
+	// get base config
+	var baseConfig config.BaseConfig
+	err = yaml.Unmarshal(configData, &baseConfig) // parses YAML
+	if err != nil {
+		log.Fatalf("error unmarshaling BaseConfig data: %v", err)
+	}
+
+	// get TestService config
 	err = yaml.Unmarshal(configData, &conf) // parses YAML
 	if err != nil {
-		log.Fatalf("error unmarshaling data: %v", err)
-		os.Exit(3)
+		log.Fatalf("error unmarshaling TestConfig data: %v", err)
 	}
+	conf.BaseConfig = baseConfig
+	log.Printf("loaded config %s", configData)
 
 	// Run the tests
 	code := m.Run()
@@ -35,7 +44,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// TODO: update tests to pass addresses []string from config
 func TestHelloWorld(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.HelloWorld()

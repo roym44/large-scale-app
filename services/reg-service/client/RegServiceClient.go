@@ -11,6 +11,7 @@ import (
 
 // Note: Code Duplication to prevent importing ServiceClientBase creating an import cycle
 type RegServiceClient struct {
+	// We don't need ServiceName field like in ServiceClientBase (since we are the registry)
 	RegistryAddresses []string
 	CreateClient      func(grpc.ClientConnInterface) service.RegServiceClient
 }

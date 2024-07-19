@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
+	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
 )
 
@@ -32,6 +33,7 @@ func (obj *ServiceClientBase[client_t]) Connect() (res client_t, closeFunc func(
 		var empty client_t
 		return empty, nil, fmt.Errorf("no available nodes found")
 	}
+	Logger.Printf("Got node address %s", node_address)
 
 	// connect
 	conn, err := grpc.Dial(node_address, grpc.WithInsecure(), grpc.WithBlock())

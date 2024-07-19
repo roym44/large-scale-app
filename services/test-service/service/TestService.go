@@ -20,12 +20,20 @@ type testServiceImplementation struct {
 }
 
 func Start(configData []byte) error {
-	// get config
-	var config config.TestConfig
-	err := yaml.Unmarshal(configData, &config) // parses YAML
+	// get base config
+	var baseConfig config.BaseConfig
+	err := yaml.Unmarshal(configData, &baseConfig) // parses YAML
 	if err != nil {
-		Logger.Fatalf("error unmarshaling data: %v", err)
+		Logger.Fatalf("error unmarshaling BaseConfig data: %v", err)
 	}
+
+	// get TestService config
+	var config config.TestConfig
+	err = yaml.Unmarshal(configData, &config) // parses YAML
+	if err != nil {
+		Logger.Fatalf("error unmarshaling TestConfig data: %v", err)
+	}
+	config.BaseConfig = baseConfig
 
 	// start service
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {

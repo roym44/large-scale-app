@@ -40,11 +40,12 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 // Note: copy of ServiceBase::Start() without the regAddresses parameter (not needed)
 func startRegService(serviceName string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
 	// start the service
-	_, grpcServer, startListening, err := startgRPC(grpcListenPort)
+	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
 	if err != nil {
 		return err
 	}
 	bindgRPCToService(grpcServer)
+	Logger.Printf("RegService starts listening on %s\n", listeningAddress)
 	startListening()
 	return nil
 }

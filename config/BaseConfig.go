@@ -1,5 +1,5 @@
 package config
 
-type ConfigBase struct {
+type BaseConfig struct {
 	Type string `yaml:"type"`
 }

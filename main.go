@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
-	TestService "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/service"
 	RegService "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/service"
+	TestService "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/service"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"gopkg.in/yaml.v2"
 )
@@ -24,7 +24,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	var config config.ConfigBase
+	var config config.BaseConfig
 	err = yaml.Unmarshal(configData, &config) // parses YAML
 	if err != nil {
 		log.Fatalf("error unmarshaling data: %v", err)

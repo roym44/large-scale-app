@@ -67,8 +67,8 @@ func Start(configData []byte) error {
 			Logger.Printf("startRegService failed %v for port %s ", err, port)
 		}
 	}
-	Logger.Fatalf("Failed to connect to all the registry servers")
-	return fmt.Errorf("Failed to connect to all the registry servers")
+	Logger.Fatalf("Failed to start RegService")
+	return fmt.Errorf("Failed to start RegService")
 }
 
 func (obj *regServiceImplementation) Register(_ context.Context, params *UpdateRegistryParameters) (_ *emptypb.Empty, err error) {

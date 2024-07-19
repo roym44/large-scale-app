@@ -36,7 +36,7 @@ func NewRegServiceClient(addresses []string) *RegServiceClient {
 func (obj *RegServiceClient) Register(service_name string, node_addr string) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return fmt.Errorf("could not connect to registery server: %v", err)
+		return fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Store RPC function
@@ -50,7 +50,7 @@ func (obj *RegServiceClient) Register(service_name string, node_addr string) err
 func (obj *RegServiceClient) Unregister(service_name string, node_addr string) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return fmt.Errorf("could not connect to registery server: %v", err)
+		return fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Store RPC function
@@ -64,13 +64,13 @@ func (obj *RegServiceClient) Unregister(service_name string, node_addr string) e
 func (obj *RegServiceClient) Discover(service_name string) ([]string, error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to registery server: %v", err)
+		return nil, fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Store RPC function
 	discovered, err := c.Discover(context.Background(), wrapperspb.String(service_name))
 	if err != nil {
-		return nil, fmt.Errorf("could not call Unregister: %v", err)
+		return nil, fmt.Errorf("could not call Discover: %v", err)
 	}
 	return discovered.Addresses, nil
 }

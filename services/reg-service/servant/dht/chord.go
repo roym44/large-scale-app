@@ -22,8 +22,11 @@ func init() {
 	openjdkRuntime = metaffi.NewMetaFFIRuntime("openjdk")
 
 	// load the Chord.class
-	chordModule, err := openjdkRuntime.LoadModule("./dht/Chord.class")
-
+	var err error
+	chordModule, err = openjdkRuntime.LoadModule("./dht/Chord.class")
+	if err != nil {
+		panic(err)
+	}
 	// load init() constructor
 	newChord, err = chordModule.Load("class=dht.Chord,callable=<init>",
 		[]IDL.MetaFFIType{IDL.STRING8, IDL.INT32},
@@ -85,7 +88,7 @@ type Chord struct {
 	handle metaffiruntime.MetaFFIHandle
 }
 
-// wrapping the functions
+// wrapping the java methods
 func NewChord(name string, port int32) (*Chord, error) {
 	h, err := newChord(name, port)
 	if err != nil {

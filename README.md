@@ -72,6 +72,11 @@ go get github.com/MetaFFI/lang-plugin-go@v0.1.2
 go mod tidy
 go build -o ./output/large-scale-workshop
 ```
+We have the Chord DHT test:
+```
+cd /workspaces/large-scale-workshop/services/reg-service/dht
+go test -v
+```
 We have three components now that should run in separate terminals:
 1. RegService:
 ```

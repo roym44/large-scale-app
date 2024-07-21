@@ -82,6 +82,11 @@ We have three components now that should run in separate terminals:
 ```
 ./output/large-scale-workshop ./services/reg-service/service/RegService.yaml
 ```
+Unit testing for RegService:
+```
+cd /workspaces/large-scale-workshop/services/reg-service/client/
+go test -v
+```
 2. TestService:
 ```
 ./output/large-scale-workshop ./services/test-service/service/TestService.yaml

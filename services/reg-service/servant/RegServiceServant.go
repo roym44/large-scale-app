@@ -101,7 +101,7 @@ func IsAliveCheck() {
 				}
 			}
 			// unregister the "dead" nodes
-			for i := len(nodes); i >= 0; i-- {
+			for i := len(nodes) - 1; i >= 0; i-- {
 				if !nodes[i].Alive {
 					Unregister(serviceName, nodes[i].Address)
 				}

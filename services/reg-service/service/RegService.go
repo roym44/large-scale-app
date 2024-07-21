@@ -45,6 +45,9 @@ func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRe
 		return err
 	}
 	bindgRPCToService(grpcServer)
+	Logger.Printf("RegService starts an IsAlive thread")
+	go RegServiceServant.IsAliveCheck()
+
 	Logger.Printf("RegService starts listening on %s\n", listeningAddress)
 	startListening()
 	return nil

@@ -1,12 +1,15 @@
 package RegServiceServant
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/client"
+	testservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -74,24 +77,66 @@ func Discover(service_name string) ([]string, error) {
 	return addresses, nil
 }
 
-// TODO: figure out a way to connect to any node - with a promise it implements IsAlive(), and add goroutine for this check
-// TODO: notice that we can't use NewTestServiceClient, we need to generically support a grpc server with IsAlive(), maybe new proto...
+// TestServiceClient code (we duplicate some code for the IsAlive grpc connection)
+type TestServiceClient struct {
+	Address string // we have a specified address, not using the registry
+	// client_t == testservicecommon.TestServiceClient
+	CreateClient func(grpc.ClientConnInterface) testservicecommon.TestServiceClient
+}
+
+func NewTestServiceClient(address string) *TestServiceClient {
+	return &TestServiceClient{
+		Address:      address,
+		CreateClient: testservicecommon.NewTestServiceClient,
+	}
+}
+
+func (obj *TestServiceClient) Connect() (res testservicecommon.TestServiceClient, closeFunc func(), err error) {
+	// Set a timeout of 5 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, obj.Address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		var empty testservicecommon.TestServiceClient
+		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.Address, err)
+	}
+	c := obj.CreateClient(conn)
+	return c, func() { conn.Close() }, nil
+}
+
+func (obj *TestServiceClient) IsAlive() (bool, error) {
+	c, closeFunc, err := obj.Connect()
+	if err != nil {
+		return false, fmt.Errorf("could not connect to server: %v", err)
+	}
+	defer closeFunc()
+	// Call the IsAlive RPC function
+	r, err := c.IsAlive(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return false, fmt.Errorf("could not call IsAlive: %v", err)
+	}
+	return r.Value, nil
+}
 
 // Internal logic, health checking the nodes
 func IsAliveCheck() {
+	utils.Logger.Printf("IsAliveCheck: called\n")
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
 		mutex.Lock()
 		for serviceName, nodes := range cacheMap {
-			for i, node := range nodes {
-				c := NewTestServiceClient(nil, "nil")
+			for i := 0; i < len(nodes); i++ {
+				utils.Logger.Printf("IsAliveCheck: Service = %s, Node = %v\n", serviceName, nodes[i])
+				c := NewTestServiceClient(nodes[i].Address)
 				alive, err := c.IsAlive()
 				// we assume that (!alive) iff (err != nil) in IsAlive implementation
 				if !alive {
-					utils.Logger.Printf("Service is not alive, address %s: %v\n", node.Address, err)
+					utils.Logger.Printf("IsAliveCheck: Node %v is not alive: error = %v\n", nodes[i], err)
 					nodes[i].FailCount++
-					if node.FailCount >= 2 {
+					if nodes[i].FailCount >= 2 {
+						utils.Logger.Printf("IsAliveCheck: marking node as not alive! %v\n", nodes[i])
 						// mark the node to be unregistered later
 						nodes[i].Alive = false
 					}
@@ -103,6 +148,7 @@ func IsAliveCheck() {
 			// unregister the "dead" nodes
 			for i := len(nodes) - 1; i >= 0; i-- {
 				if !nodes[i].Alive {
+					utils.Logger.Printf("Node %s is not alive, unregistering...\n", nodes[i].Address)
 					Unregister(serviceName, nodes[i].Address)
 				}
 			}

@@ -121,11 +121,11 @@ func (obj *TestServiceClient) IsAlive() (bool, error) {
 
 // Internal logic, health checking the nodes
 func IsAliveCheck() {
-	utils.Logger.Printf("IsAliveCheck: called\n")
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
 		mutex.Lock()
+		utils.Logger.Printf("IsAliveCheck: called\n")
 		for serviceName, nodes := range cacheMap {
 			for i := 0; i < len(nodes); i++ {
 				utils.Logger.Printf("IsAliveCheck: Service = %s, Node = %v\n", serviceName, nodes[i])
@@ -145,11 +145,11 @@ func IsAliveCheck() {
 					nodes[i].Alive = true
 				}
 			}
-			// unregister the "dead" nodes
+			// unregister (manually, not calling the API function) the "dead" nodes
 			for i := len(nodes) - 1; i >= 0; i-- {
 				if !nodes[i].Alive {
 					utils.Logger.Printf("Node %s is not alive, unregistering...\n", nodes[i].Address)
-					Unregister(serviceName, nodes[i].Address)
+					cacheMap[serviceName] = append(cacheMap[serviceName][:i], cacheMap[serviceName][i+1:]...)
 				}
 			}
 		}

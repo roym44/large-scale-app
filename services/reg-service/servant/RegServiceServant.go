@@ -2,6 +2,7 @@ package RegServiceServant
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/client"
@@ -10,6 +11,7 @@ import (
 
 var (
 	cacheMap map[string][]Node
+	mutex    sync.Mutex
 )
 
 type Node struct {
@@ -20,11 +22,13 @@ type Node struct {
 
 func init() {
 	cacheMap = make(map[string][]Node)
-
 }
 
 // Registry API
 func Register(service_name string, node_address string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if cacheMap[service_name] != nil {
 		for _, node := range cacheMap[service_name] {
 			if node.Address == node_address {
@@ -38,6 +42,9 @@ func Register(service_name string, node_address string) {
 }
 
 func Unregister(service_name string, node_address string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if cacheMap[service_name] != nil {
 		for i, node := range cacheMap[service_name] {
 			if node.Address == node_address {
@@ -53,6 +60,9 @@ func Unregister(service_name string, node_address string) {
 }
 
 func Discover(service_name string) ([]string, error) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	nodes, ok := cacheMap[service_name]
 	addresses := []string{}
 	if !ok {
@@ -72,6 +82,7 @@ func IsAliveCheck() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
+		mutex.Lock()
 		for serviceName, nodes := range cacheMap {
 			for i, node := range nodes {
 				c := NewTestServiceClient(nil, "nil")
@@ -96,5 +107,6 @@ func IsAliveCheck() {
 				}
 			}
 		}
+		mutex.Unlock()
 	}
 }

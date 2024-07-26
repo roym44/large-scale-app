@@ -4,6 +4,43 @@ import (
 	"testing"
 )
 
+func TestNew(t *testing.T) {
+	//newChord 1
+	chord, err := NewChord("root", 1099)
+	if err != nil {
+		t.Fatalf("could not create new chord: %v", err)
+		return
+	}
+	t.Logf("Response: %v", chord)
+
+	t.Logf("creating root again")
+	//newChord 2
+	chord2, err := NewChord("asd", 1099)
+	if err != nil {
+		t.Fatalf("could not create new chord: %v", err)
+		return
+	}
+	t.Logf("Response: %v", chord2)
+}
+
+func TestPort(t *testing.T) {
+	//newChord 1
+	chord, err := NewChord("root", 1099)
+	if err != nil {
+		t.Fatalf("could not create new chord: %v", err)
+		return
+	}
+	t.Logf("Response: %v", chord)
+
+	//joinChord
+	j_chord, err := JoinChord("node2", "root", 1099)
+	if err != nil {
+		t.Fatalf("could not join chord: %v", err)
+		return
+	}
+	t.Logf("Response: %v", j_chord)
+}
+
 func TestGeneral(t *testing.T) {
 	//newChord
 	chord, err := NewChord("root", 1099)

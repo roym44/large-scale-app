@@ -31,9 +31,12 @@ func IsFirst() bool {
 	return is_first
 }
 
-func InitServant() {
-	utils.Logger.Printf("RegServiceServant::InitServant() called")
+func InitServant(chord_name string) {
+	utils.Logger.Printf("RegServiceServant::InitServant() called with %v", chord_name)
 	var err error
+	// if chord_name == "8502" {
+	// }
+	// TODO: what happens when a second RegService needs to join? how does he know if he's first without calling NewChord first?
 	chordNode, err = dht.NewChord("root", 6666)
 	if err != nil {
 		utils.Logger.Fatalf("could not create new chord: %v", err)
@@ -51,9 +54,8 @@ func InitServant() {
 	// join
 	if !is_first {
 		utils.Logger.Printf("not first")
-		// join already existing "root"
-		// TODO: make "node2" be "nodeX"
-		chordNode, err = dht.JoinChord("node2", "root", 6666)
+		// join already existing "root" with a new chord_name
+		chordNode, err = dht.JoinChord(chord_name, "root", 6666)
 		if err != nil {
 			utils.Logger.Fatalf("could not join chord: %v", err)
 			return

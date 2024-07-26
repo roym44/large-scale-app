@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v2"
+	"strconv"
 )
 
 type regServiceImplementation struct {
@@ -24,7 +25,8 @@ type regServiceImplementation struct {
 func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server, startListening func(), err error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", listenPort))
 	if err != nil {
-		Logger.Fatalf("failed to listen: %v", err)
+		// we treat this as "warning"
+		Logger.Printf("startgRPC(): failed to listen: %v", err)
 		return "", nil, nil, err
 	}
 	listeningAddress = lis.Addr().String()
@@ -44,10 +46,12 @@ func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRe
 	if err != nil {
 		return err
 	}
+	Logger.Printf("startRegService(): calling bindgRPCToService")
 	bindgRPCToService(grpcServer)
 
 	// init only when a new RegService is starting
-	RegServiceServant.InitServant()
+	port_str := strconv.Itoa(grpcListenPort)
+	RegServiceServant.InitServant(port_str) // chord name will be the address
 
 	// IsAlive check performed only by the "root" node
 	if RegServiceServant.IsFirst() {
@@ -56,6 +60,7 @@ func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRe
 	}
 
 	Logger.Printf("RegService starts listening on %s\n", listeningAddress)
+	// blocks
 	startListening()
 	return nil
 }
@@ -72,14 +77,15 @@ func Start(configData []byte) error {
 		RegisterRegServiceServer(s, &regServiceImplementation{})
 	}
 	for port := config.ListenPort; port < config.ListenPort+10; port++ {
+		Logger.Printf("Start(): trying port %d", port)
 		err = startRegService(port, bindgRPCToService)
 		// will reach here only if failed to connect
 		if err != nil {
-			Logger.Printf("startRegService failed %v for port %d", err, port)
+			// we treat this as "warning"
+			Logger.Printf("Start(): startRegService failed %v for port %d", err, port)
 		}
 	}
-	Logger.Fatalf("Failed to start RegService")
-	return fmt.Errorf("Failed to start RegService")
+	return fmt.Errorf("failed to start RegService")
 }
 
 func (obj *regServiceImplementation) Register(_ context.Context, params *UpdateRegistryParameters) (_ *emptypb.Empty, err error) {

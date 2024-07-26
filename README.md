@@ -100,7 +100,6 @@ go get github.com/MetaFFI/lang-plugin-go@v0.1.2
 go mod tidy
 go build -o ./output/large-scale-workshop
 ```
-
 Chord DHT fixes:
 - replace `Chord.class`
 - `mv /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so`

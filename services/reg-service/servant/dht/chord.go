@@ -28,6 +28,7 @@ func init() {
 		panic(err)
 	}
 	// load init() constructor
+	// TODO: fix class path to be absolute
 	newChord, err = chordModule.Load("class=dht.Chord,callable=<init>",
 		[]IDL.MetaFFIType{IDL.STRING8, IDL.INT32},
 		[]IDL.MetaFFIType{IDL.HANDLE})

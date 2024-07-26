@@ -18,6 +18,7 @@ var crawlerModule *metaffi.MetaFFIModule
 var extract_links_from_url func(...interface{}) ([]interface{}, error)
 var cacheMap map[string]string
 
+// TODO: maybe it causes a problem like in RegServiceServant? resetting the cacheMap
 func init() {
 	cacheMap = make(map[string]string)
 
@@ -30,9 +31,9 @@ func init() {
 		panic(msg)
 	}
 	// Load the Crawler module
-	crawlerModule, err = pythonRuntime.LoadModule("./services/test-service/servant/crawler.py")
+	crawlerModule, err = pythonRuntime.LoadModule("/workspaces/RLAD/services/test-service/servant/crawler.py")
 	if err != nil {
-		msg := fmt.Sprintf("Failed to load ./crawler/crawler.py module: %v", err)
+		msg := fmt.Sprintf("Failed to load crawler.py module: %v", err)
 		utils.Logger.Fatalf(msg)
 		panic(msg)
 	}

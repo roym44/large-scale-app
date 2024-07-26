@@ -13,6 +13,13 @@ func TestNew(t *testing.T) {
 	}
 	t.Logf("Response: %v", chord)
 
+	r, err := chord.Get("key1")
+	if err != nil {
+		t.Fatalf("could not call Get: %v", err)
+		return
+	}
+	t.Logf("Response: %v", r)
+
 	t.Logf("creating root again")
 	//newChord 2
 	chord2, err := NewChord("asd", 1099)

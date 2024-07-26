@@ -45,8 +45,15 @@ func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRe
 		return err
 	}
 	bindgRPCToService(grpcServer)
-	Logger.Printf("RegService starts an IsAlive thread")
-	go RegServiceServant.IsAliveCheck()
+
+	// init only when a new RegService is starting
+	RegServiceServant.InitServant()
+
+	// IsAlive check performed only by the "root" node
+	if RegServiceServant.IsFirst() {
+		Logger.Printf("RegService starts an IsAlive thread")
+		go RegServiceServant.IsAliveCheck()
+	}
 
 	Logger.Printf("RegService starts listening on %s\n", listeningAddress)
 	startListening()
@@ -68,7 +75,7 @@ func Start(configData []byte) error {
 		err = startRegService(port, bindgRPCToService)
 		// will reach here only if failed to connect
 		if err != nil {
-			Logger.Printf("startRegService failed %v for port %s ", err, port)
+			Logger.Printf("startRegService failed %v for port %d", err, port)
 		}
 	}
 	Logger.Fatalf("Failed to start RegService")

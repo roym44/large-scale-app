@@ -119,7 +119,7 @@ cd /workspaces/RLAD/services/reg-service/servant
 ```
 2. TestService:
 ```
-cd /workspaces/RLAD
+cd /workspaces/RLAD/services/reg-service/servant
 /workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
 ```
 3. TestServiceClient:

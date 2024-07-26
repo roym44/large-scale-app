@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	dht "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant/dht"
 	testservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
@@ -13,8 +14,10 @@ import (
 )
 
 var (
-	cacheMap map[string][]Node
-	mutex    sync.Mutex
+	is_first  bool
+	chordNode *dht.Chord
+	cacheMap  map[string][]Node
+	mutex     sync.Mutex
 )
 
 type Node struct {
@@ -23,8 +26,44 @@ type Node struct {
 	Alive     bool
 }
 
-func init() {
-	cacheMap = make(map[string][]Node)
+func IsFirst() bool {
+	utils.Logger.Printf("IsFirst() called, result: %v", is_first)
+	return is_first
+}
+
+func InitServant() {
+	utils.Logger.Printf("RegServiceServant::InitServant() called")
+	var err error
+	chordNode, err = dht.NewChord("root", 6666)
+	if err != nil {
+		utils.Logger.Fatalf("could not create new chord: %v", err)
+		return
+	}
+	utils.Logger.Printf("NewChord returned: %v", chordNode)
+
+	is_first, err = chordNode.IsFirst()
+	if err != nil {
+		utils.Logger.Fatalf("could not call IsFirst: %v", err)
+		return
+	}
+	utils.Logger.Printf("chordNode.IsFirst() result: %v", is_first)
+
+	// join
+	if !is_first {
+		utils.Logger.Printf("not first")
+		// join already existing "root"
+		// TODO: make "node2" be "nodeX"
+		chordNode, err = dht.JoinChord("node2", "root", 6666)
+		if err != nil {
+			utils.Logger.Fatalf("could not join chord: %v", err)
+			return
+		}
+		utils.Logger.Printf("JoinChord returned: %v", chordNode)
+	} else {
+		// we are root, initialize the cache map :)
+		utils.Logger.Printf("first!")
+		cacheMap = make(map[string][]Node)
+	}
 }
 
 // Registry API

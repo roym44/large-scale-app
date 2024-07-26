@@ -7,6 +7,12 @@ Large Scale Workshop
 - some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
 - our "module name" is `github.com/TAULargeScaleWorkshop/RLAD`
 
+### Extra installations
+```
+sudo apt-get update && sudo apt-get install -y python3.11-dev
+python3.11 -m pip install beautifulsoup4 requests
+```
+
 ## Section 1 - running main.go
 ```
 go get
@@ -16,7 +22,7 @@ go build -o ./output/large-scale-workshop
 
 ## Section 2 - running the test
 ```
-cd /workspaces/large-scale-workshop/interop/
+cd /workspaces/RLAD/interop/
 go clean -testcache
 go test -v -tags=interop
 ```
@@ -24,7 +30,7 @@ go test -v -tags=interop
 ## Section 3
 First, compiling IDL into Go protocol buffers code and gRPC to generate `TestService.pb.go` and `TestService_grpc.pb.go`
 ```
-cd /workspaces/large-scale-workshop/services/test-service/common
+cd /workspaces/RLAD/services/test-service/common
 protoc -I=. \
        --go_out=. \
        --go_opt=paths=source_relative \
@@ -42,17 +48,12 @@ go build -o ./output/large-scale-workshop
 ```
 And test the client:
 ```
-cd /workspaces/large-scale-workshop/services/test-service/client/
+cd /workspaces/RLAD/services/test-service/client/
 go test -v
 ```
 
-#### Extra installations
-```
-sudo apt-get update && sudo apt-get install -y python3.11-dev
-python3.11 -m pip install beautifulsoup4 requests
-```
-
 ## Section 4
+### Cluster & Registry
 First, compiling IDL into Go protocol buffers code and gRPC to generate `RegService.pb.go` and `RegService_grpc.pb.go`
 ```
 cd /workspaces/RLAD/services/reg-service/common
@@ -65,17 +66,11 @@ protoc -I=. \
        --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/regservice/RegService.proto \
        RegService.proto
 ```
-
-make sure you get the correct version of MetaFFI, run at the root directory of the project and build everything:
+Now compiling our main:
 ```
-go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-go mod tidy
+cd /workspaces/RLAD
+go get
 go build -o ./output/large-scale-workshop
-```
-We have the Chord DHT test:
-```
-cd /workspaces/large-scale-workshop/services/reg-service/dht
-go test -v
 ```
 We have three components now that should run in separate terminals:
 1. RegService:
@@ -84,7 +79,7 @@ We have three components now that should run in separate terminals:
 ```
 Unit testing for RegService:
 ```
-cd /workspaces/large-scale-workshop/services/reg-service/client/
+cd /workspaces/RLAD/services/reg-service/client/
 go test -v
 ```
 2. TestService:
@@ -93,6 +88,26 @@ go test -v
 ```
 3. TestServiceClient:
 ```
-cd /workspaces/large-scale-workshop/services/test-service/client/
+cd /workspaces/RLAD/services/test-service/client/
+go test -v
+```
+
+
+### Cluster Registry Service & Cache Service
+Make sure you get the correct version of MetaFFI, run at the root directory of the project and build everything:
+```
+go get github.com/MetaFFI/lang-plugin-go@v0.1.2
+go mod tidy
+go build -o ./output/large-scale-workshop
+```
+
+Chord DHT fixes:
+- replace `Chord.class`
+- `mv /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so`
+- `chmod 777 /usr/local/metaffi/xllr.openjdk.so`
+
+We have the Chord DHT test:
+```
+cd /workspaces/RLAD/services/reg-service/servant/dht
 go test -v
 ```

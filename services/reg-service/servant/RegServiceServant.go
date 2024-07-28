@@ -9,6 +9,7 @@ import (
 
 	dht "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant/dht"
 	testservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
+	cacheservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -106,7 +107,7 @@ func Register(service_name string, node_address string) {
 		// get the current list
 		enc, err := chordNode.Get(service_name)
 		if err != nil {
-			utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+			utils.Logger.Printf("chordNode.Get failed with error: %v", err)
 		}
 		addresses = decodeStrings(enc)
 	}
@@ -126,7 +127,7 @@ func Register(service_name string, node_address string) {
 	updated_enc := encodeStrings(addresses)
 	err = chordNode.Set(service_name, updated_enc)
 	if err != nil {
-		utils.Logger.Fatalf("chordNode.Set failed with error: %v", err)
+		utils.Logger.Printf("chordNode.Set failed with error: %v", err)
 	}
 	utils.Logger.Printf("Address %s added for service %s\n", node_address, service_name)
 }
@@ -136,7 +137,7 @@ func unregisterFromChord(service_name string, node_address string) {
 	// get the current list
 	enc, err := chordNode.Get(service_name)
 	if err != nil {
-		utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+		utils.Logger.Printf("chordNode.Get failed with error: %v", err)
 	}
 	lst := decodeStrings(enc)
 	if len(lst) == 0 {
@@ -151,7 +152,7 @@ func unregisterFromChord(service_name string, node_address string) {
 			if len(lst) == 0 {
 				err = chordNode.Delete(service_name)
 				if err != nil {
-					utils.Logger.Fatalf("chordNode.Delete failed with error: %v", err)
+					utils.Logger.Printf("chordNode.Delete failed with error: %v", err)
 				}
 				return
 			}
@@ -159,7 +160,7 @@ func unregisterFromChord(service_name string, node_address string) {
 			updated_enc := encodeStrings(lst)
 			err = chordNode.Set(service_name, updated_enc)
 			if err != nil {
-				utils.Logger.Fatalf("chordNode.Set failed with error: %v", err)
+				utils.Logger.Printf("chordNode.Set failed with error: %v", err)
 			}
 			return
 		}
@@ -189,7 +190,7 @@ func Discover(service_name string) ([]string, error) {
 	// get the current list
 	enc, err := chordNode.Get(service_name)
 	if err != nil {
-		utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+		utils.Logger.Printf("chordNode.Get failed with error: %v", err)
 	}
 	lst := decodeStrings(enc)
 	if len(lst) == 0 {
@@ -201,14 +202,25 @@ func Discover(service_name string) ([]string, error) {
 // TestServiceClient code (we duplicate some code for the IsAlive grpc connection)
 type TestServiceClient struct {
 	Address string // we have a specified address, not using the registry
-	// client_t == testservicecommon.TestServiceClient
 	CreateClient func(grpc.ClientConnInterface) testservicecommon.TestServiceClient
+}
+
+type CacheServiceClient struct {
+	Address string // we have a specified address, not using the registry
+	CreateClient func(grpc.ClientConnInterface) cacheservicecommon.CacheServiceClient
 }
 
 func NewTestServiceClient(address string) *TestServiceClient {
 	return &TestServiceClient{
 		Address:      address,
 		CreateClient: testservicecommon.NewTestServiceClient,
+	}
+}
+
+func NewCacheServiceClient(address string) *CacheServiceClient {
+	return &CacheServiceClient{
+		Address:      address,
+		CreateClient: cacheservicecommon.NewCacheServiceClient,
 	}
 }
 
@@ -240,6 +252,34 @@ func (obj *TestServiceClient) IsAlive() (bool, error) {
 	return r.Value, nil
 }
 
+func (obj *CacheServiceClient) Connect() (res cacheservicecommon.CacheServiceClient, closeFunc func(), err error) {
+	// Set a timeout of 5 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, obj.Address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		var empty cacheservicecommon.CacheServiceClient
+		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.Address, err)
+	}
+	c := obj.CreateClient(conn)
+	return c, func() { conn.Close() }, nil
+}
+
+func (obj *CacheServiceClient) IsAlive() (bool, error) {
+	c, closeFunc, err := obj.Connect()
+	if err != nil {
+		return false, fmt.Errorf("could not connect to server: %v", err)
+	}
+	defer closeFunc()
+	// Call the IsAlive RPC function
+	r, err := c.IsAlive(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return false, fmt.Errorf("could not call IsAlive: %v", err)
+	}
+	return r.Value, nil
+}
+
 // Internal logic, health checking the nodes
 func IsAliveCheck() {
 	ticker := time.NewTicker(10 * time.Second)
@@ -258,14 +298,24 @@ func IsAliveCheck() {
 			// get the current list
 			enc, err := chordNode.Get(serviceName)
 			if err != nil {
-				utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+				utils.Logger.Printf("chordNode.Get failed with error: %v", err)
 			}
 			addresses := decodeStrings(enc)
 
 			for _, address := range addresses {
 				utils.Logger.Printf("IsAliveCheck: Service = %s, Node = %v\n", serviceName, address)
-				c := NewTestServiceClient(address)
-				alive, err := c.IsAlive()
+				var alive bool
+				var err error
+				switch serviceName {
+				case "TestService":
+					c := NewTestServiceClient(address)
+					alive, err = c.IsAlive()
+				case "CacheService":
+					c := NewCacheServiceClient(address)
+					alive, err = c.IsAlive()
+				default:
+					utils.Logger.Printf("Unknown service name: %v", serviceName)
+				}
 
 				// create node status if doesn't exist
 				_, ok := cacheMap[address]

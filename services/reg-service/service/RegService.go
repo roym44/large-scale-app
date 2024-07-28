@@ -14,7 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v2"
-	"strconv"
 )
 
 type regServiceImplementation struct {
@@ -40,7 +39,7 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 }
 
 // Note: copy of ServiceBase::Start() without the regAddresses parameter (not needed)
-func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
+func startRegService(name string, grpcListenPort int, bindgRPCToService func(s grpc.ServiceRegistrar)) (err error) {
 	// start the service
 	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
 	if err != nil {
@@ -50,8 +49,7 @@ func startRegService(grpcListenPort int, bindgRPCToService func(s grpc.ServiceRe
 	bindgRPCToService(grpcServer)
 
 	// init only when a new RegService is starting
-	port_str := strconv.Itoa(grpcListenPort)
-	RegServiceServant.InitServant(port_str) // chord name will be the address
+	RegServiceServant.InitServant(name) // chord name will be the address
 
 	// IsAlive check performed only by the "root" node
 	if RegServiceServant.IsFirst() {
@@ -78,7 +76,7 @@ func Start(configData []byte) error {
 	}
 	for port := config.ListenPort; port < config.ListenPort+10; port++ {
 		Logger.Printf("Start(): trying port %d", port)
-		err = startRegService(port, bindgRPCToService)
+		err = startRegService(config.Name, port, bindgRPCToService)
 		// will reach here only if failed to connect
 		if err != nil {
 			// we treat this as "warning"

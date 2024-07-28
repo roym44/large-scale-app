@@ -14,12 +14,12 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// globals
 var (
 	is_first  bool
 	chordNode *dht.Chord
-	// address : NodeStatus
-	cacheMap map[string]*NodeStatus
-	mutex    sync.Mutex
+	cacheMap  map[string]*NodeStatus // node address : NodeStatus
+	mutex     sync.Mutex
 )
 
 type NodeStatus struct {
@@ -27,6 +27,30 @@ type NodeStatus struct {
 	Alive     bool
 }
 
+func encodeStrings(lst []string) string {
+	return strings.Join(lst, ",")
+}
+
+func decodeStrings(enc string) []string {
+	return strings.Split(enc, ",")
+}
+
+func isInChord(service_name string) bool {
+	keys, err := chordNode.GetAllKeys()
+	if err != nil {
+		utils.Logger.Fatalf("chordNode.GetAllKeys failed with error: %v", err)
+	}
+
+	// check if the service is in the keys list
+	for _, item := range keys {
+		if item == service_name {
+			return true
+		}
+	}
+	return false
+}
+
+// helper functions
 func IsFirst() bool {
 	utils.Logger.Printf("IsFirst() called, result: %v", is_first)
 	return is_first
@@ -38,7 +62,7 @@ func InitServant(chord_name string) {
 	// if chord_name == "8502" {
 	// }
 	// TODO: what happens when a second RegService needs to join? how does he know if he's first without calling NewChord first?
-	chordNode, err = dht.NewChord("root", 6666)
+	chordNode, err = dht.NewChord("root", 1099)
 	if err != nil {
 		utils.Logger.Fatalf("could not create new chord: %v", err)
 		return
@@ -56,7 +80,7 @@ func InitServant(chord_name string) {
 	if !is_first {
 		utils.Logger.Printf("not first")
 		// join already existing "root" with a new chord_name
-		chordNode, err = dht.JoinChord(chord_name, "root", 6666)
+		chordNode, err = dht.JoinChord(chord_name, "root", 1099)
 		if err != nil {
 			utils.Logger.Fatalf("could not join chord: %v", err)
 			return
@@ -69,30 +93,27 @@ func InitServant(chord_name string) {
 	}
 }
 
-func encodeStrings(lst []string) string {
-	return strings.Join(lst, ",")
-}
-
-func decodeStrings(enc string) []string {
-	return strings.Split(enc, ",")
-}
-
 // Registry API
 func Register(service_name string, node_address string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// get the current list
-	utils.Logger.Printf("chordNode.Get before")
-	enc, err := chordNode.Get(service_name)
-	utils.Logger.Printf("chordNode.Get after")
-	if err != nil {
-		utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+	var addresses []string // by default, empty list
+	var err error
+
+	// get service addresses
+	if isInChord(service_name) {
+		// get the current list
+		enc, err := chordNode.Get(service_name)
+		if err != nil {
+			utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
+		}
+		addresses = decodeStrings(enc)
 	}
-	utils.Logger.Printf("decodeStrings before")
-	lst := decodeStrings(enc)
-	if len(lst) > 0 {
-		for _, address := range lst {
+
+	// checks if address already exists
+	if len(addresses) > 0 {
+		for _, address := range addresses {
 			if address == node_address {
 				utils.Logger.Printf("Address %s already exists for service %s\n", node_address, service_name)
 				return
@@ -101,17 +122,16 @@ func Register(service_name string, node_address string) {
 	}
 
 	// add to list and set back to chord
-	lst = append(lst, node_address)
-	updated_enc := encodeStrings(lst)
-	utils.Logger.Printf("chordNode.Set before")
+	addresses = append(addresses, node_address)
+	updated_enc := encodeStrings(addresses)
 	err = chordNode.Set(service_name, updated_enc)
-	utils.Logger.Printf("chordNode.Set after")
 	if err != nil {
 		utils.Logger.Fatalf("chordNode.Set failed with error: %v", err)
 	}
 	utils.Logger.Printf("Address %s added for service %s\n", node_address, service_name)
 }
 
+// note: assuming service_name is registered
 func unregisterFromChord(service_name string, node_address string) {
 	// get the current list
 	enc, err := chordNode.Get(service_name)
@@ -119,35 +139,52 @@ func unregisterFromChord(service_name string, node_address string) {
 		utils.Logger.Fatalf("chordNode.Get failed with error: %v", err)
 	}
 	lst := decodeStrings(enc)
-	if len(lst) > 0 {
-		for i, address := range lst {
-			if address == node_address {
-				// remove from list and set back to chord
-				lst = append(lst[:i], lst[i+1:]...)
-				utils.Logger.Printf("Address %s removed for service %s\n", node_address, service_name)
-				updated_enc := encodeStrings(lst)
-				err = chordNode.Set(service_name, updated_enc)
+	if len(lst) == 0 {
+		utils.Logger.Printf("Service %s not found\n", service_name)
+		return
+	}
+
+	for i, address := range lst {
+		if address == node_address {
+			// remove from list and set back to chord
+			lst = append(lst[:i], lst[i+1:]...)
+			if len(lst) == 0 {
+				err = chordNode.Delete(service_name)
 				if err != nil {
-					utils.Logger.Fatalf("chordNode.Set failed with error: %v", err)
+					utils.Logger.Fatalf("chordNode.Delete failed with error: %v", err)
 				}
 				return
 			}
+			utils.Logger.Printf("Address %s removed for service %s\n", node_address, service_name)
+			updated_enc := encodeStrings(lst)
+			err = chordNode.Set(service_name, updated_enc)
+			if err != nil {
+				utils.Logger.Fatalf("chordNode.Set failed with error: %v", err)
+			}
+			return
 		}
-		utils.Logger.Printf("Address %s not found for service %s\n", node_address, service_name)
-	} else {
-		utils.Logger.Printf("Service %s not found\n", service_name)
 	}
+	utils.Logger.Printf("Address %s not found for service %s\n", node_address, service_name)
 }
 
 func Unregister(service_name string, node_address string) {
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	if !isInChord(service_name) {
+		utils.Logger.Printf("Service %s not registered!", service_name)
+	}
+
 	unregisterFromChord(service_name, node_address)
 }
 
 func Discover(service_name string) ([]string, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	if !isInChord(service_name) {
+		return nil, fmt.Errorf("service %s not registered", service_name)
+	}
 
 	// get the current list
 	enc, err := chordNode.Get(service_name)
@@ -246,6 +283,7 @@ func IsAliveCheck() {
 						cacheMap[address].Alive = false
 					}
 				} else {
+					utils.Logger.Printf("IsAliveCheck: Node %v is alive", address)
 					cacheMap[address].FailCount = 0
 					cacheMap[address].Alive = true
 				}

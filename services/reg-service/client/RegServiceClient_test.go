@@ -65,11 +65,8 @@ func TestRegisterUnregister(t *testing.T) {
 		t.Fatalf("could not call Unregister: %v", err)
 		return
 	}
-	nodes, err = c.Discover("test1")
-	if err != nil {
-		t.Fatalf("could not call Discover: %v", err)
-		return
-	}
+	// we expect nodes to be nil
+	nodes, _ = c.Discover("test1")
 	if len(nodes) != 0 {
 		t.Fatalf("wrong value for discover after register: expected no addresses for this service")
 		return

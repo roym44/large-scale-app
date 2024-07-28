@@ -99,7 +99,7 @@ Make sure you get the correct version of MetaFFI, run at the root directory of t
 cd /workspaces/RLAD
 go get github.com/MetaFFI/lang-plugin-go@v0.1.2
 go mod tidy
-go build -o ./output/large-scale-workshop
+go build -o ./output/large-scale-workshop -buildvcs=false
 ```
 Chord DHT fixes:
 - replace `Chord.class`
@@ -114,12 +114,10 @@ go test -v
 We have three components now that should run in separate terminals:
 1. RegService:
 ```
-cd /workspaces/RLAD/services/reg-service/servant
 /workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/reg-service/service/RegService.yaml
 ```
 2. TestService:
 ```
-cd /workspaces/RLAD/services/reg-service/servant
 /workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
 ```
 3. TestServiceClient:

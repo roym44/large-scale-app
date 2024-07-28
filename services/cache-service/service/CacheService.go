@@ -3,12 +3,12 @@ package CacheService
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
-	"github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant/dht"
+	CacheServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/servant"
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,41 +16,60 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type CacheService struct {
+type cacheServiceImplementation struct {
 	UnimplementedCacheServiceServer
-	chord dht.Chord
 }
 
-func NewCacheService(nodeName string, port int32) (*CacheService, error) {
-    chordNode, err := dht.NewChord(nodeName, port)
-    if err != nil {
-        return nil, err
-    }
+func Start(configData []byte) error {
+	// get base config
+	var baseConfig config.BaseConfig
+	err := yaml.Unmarshal(configData, &baseConfig) // parses YAML
+	if err != nil {
+		Logger.Fatalf("error unmarshaling BaseConfig data: %v", err)
+	}
 
-    return &CacheService{chord: chordNode}, nil
+	// get CacheService config
+	var config config.CacheConfig
+	err = yaml.Unmarshal(configData, &config) // parses YAML
+	if err != nil {
+		Logger.Fatalf("error unmarshaling CacheConfig data: %v", err)
+	}
+	config.BaseConfig = baseConfig
+
+	// start service
+	bindgRPCToService := func(s grpc.ServiceRegistrar) {
+		RegisterCacheServiceServer(s, &cacheServiceImplementation{})
+	}
+	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
+
+	return nil
 }
 
-func (cs *CacheService) Set(_ context.Context, params *SetKeyValueReq) (_ *emptypb.Empty, err error) {
+
+func (cs *cacheServiceImplementation) Set(_ context.Context, params *SetKeyValueReq) (_ *emptypb.Empty, err error) {
 	Logger.Printf("Set called with key: %s, value: %s", params.Key, params.Value)
-	cs.chord.Set(params.Key, params.Value)
+	CacheServiceServant.Set(params.Key, params.Value)
 	return &emptypb.Empty{}, nil
 }
 
-func (cs *CacheService) Get(_ context.Context, k *GetKeyReq) (*GetValueReq, err error) {
+func (cs *cacheServiceImplementation) Get(_ context.Context, k *GetKeyReq) (*GetValueReq, error) {
 	Logger.Printf("Get called with key: %s", k.Key)
-	value, err := cs.chord.Get(k.Key)
+	value, err := CacheServiceServant.Get(k.Key)
+	if err != nil {
+		return nil, fmt.Errorf("key not found %s", k.Key)
+	}
 	return &GetValueReq{Value: value}, nil
 }
 
-func (cs *CacheService) Delete(_ context.Context, k *GetKeyReq) (_ *emptypb.Empty, err error) {
+func (cs *cacheServiceImplementation) Delete(_ context.Context, k *GetKeyReq) (_ *emptypb.Empty, err error) {
 	Logger.Printf("Delete called with key: %s", k.Key)
-	cs.chord.Delete(k.Key)
+	CacheServiceServant.Delete(k.Key)
 	return &emptypb.Empty{}, nil
 }
 
-func (cs *CacheService) IsAlive(_ context.Context, _ *emptypb.Empty) (*wrapperspb.BoolValue, err error) {
+func (cs *cacheServiceImplementation) IsAlive(_ context.Context, _ *emptypb.Empty) (*wrapperspb.BoolValue, error) {
 	Logger.Printf("IsAlive called ")
-	IsFirst, err := cs.chord.IsFirst()
-	return wrapperspb.Bool(isFirst), nil
+	IsAlive := CacheServiceServant.IsAlive()
+	return wrapperspb.Bool(IsAlive), nil
 }
 

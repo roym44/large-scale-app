@@ -120,7 +120,11 @@ We have three components now that should run in separate terminals:
 ```
 /workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
 ```
-3. TestServiceClient:
+3. CacheService:
+```
+/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/cache-service/service/CacheService.yaml
+```
+4. TestServiceClient:
 ```
 cd /workspaces/RLAD/services/test-service/client/
 go test -v

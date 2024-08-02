@@ -11,6 +11,8 @@ Large Scale Workshop
 ```
 sudo apt-get update && sudo apt-get install -y python3.11-dev
 python3.11 -m pip install beautifulsoup4 requests
+go get github.com/MetaFFI/lang-plugin-go@v0.1.2
+go mod tidy
 ```
 
 ## Section 1 - running main.go
@@ -27,26 +29,14 @@ go clean -testcache
 go test -v -tags=interop
 ```
 
-## Section 3
-First, compiling IDL into Go protocol buffers code and gRPC to generate `TestService.pb.go` and `TestService_grpc.pb.go`
+## Section 3 - TestService
+First run: `/workspaces/RLAD/utils/testservice_proto.sh`\
+Build server: `/workspaces/RLAD/build.sh`\
+Run the server:
 ```
-cd /workspaces/RLAD/services/test-service/common
-protoc -I=. \
-       --go_out=. \
-       --go_opt=paths=source_relative \
-       --go_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/test-service \
-       --go-grpc_out=. \
-       --go-grpc_opt=paths=source_relative \
-       --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/testservice/TestService.proto \
-       TestService.proto
+/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
 ```
-Next, to run the server:
-```
-go get
-go build -o ./output/large-scale-workshop
-./output/large-scale-workshop ./services/test-service/service/TestService.yaml
-```
-And test the client:
+Test the client:
 ```
 cd /workspaces/RLAD/services/test-service/client/
 go test -v
@@ -54,76 +44,36 @@ go test -v
 
 ## Section 4
 ### Cluster & Registry
-First, compiling IDL into Go protocol buffers code and gRPC to generate `RegService.pb.go` and `RegService_grpc.pb.go`
-```
-cd /workspaces/RLAD/services/reg-service/common
-protoc -I=. \
-       --go_out=. \
-       --go_opt=paths=source_relative \
-       --go_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/reg-service \
-       --go-grpc_out=. \
-       --go-grpc_opt=paths=source_relative \
-       --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/regservice/RegService.proto \
-       RegService.proto
-```
-Now compiling our main:
-```
-cd /workspaces/RLAD
-go get
-go build -o ./output/large-scale-workshop
-```
+First run: `/workspaces/RLAD/utils/regservice_proto.sh`\
+Build: `/workspaces/RLAD/build.sh`\
 We have three components now that should run in separate terminals:
-1. RegService:
-```
-./output/large-scale-workshop ./services/reg-service/service/RegService.yaml
-```
+1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`\
 Unit testing for RegService:
 ```
 cd /workspaces/RLAD/services/reg-service/client/
 go test -v
 ```
-2. TestService:
-```
-./output/large-scale-workshop ./services/test-service/service/TestService.yaml
-```
+2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`\
 3. TestServiceClient:
 ```
 cd /workspaces/RLAD/services/test-service/client/
 go test -v
 ```
 
-
 ### Cluster Registry Service & Cache Service
-Make sure you get the correct version of MetaFFI, run at the root directory of the project and build everything:
-```
-cd /workspaces/RLAD
-go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-go mod tidy
-go build -o ./output/large-scale-workshop -buildvcs=false
-```
 Chord DHT fixes:
 - replace `Chord.class`
 - `mv /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so`
 - `chmod 777 /usr/local/metaffi/xllr.openjdk.so`
-
 We have the Chord DHT test:
 ```
 cd /workspaces/RLAD/services/reg-service/servant/dht
 go test -v
 ```
 We have three components now that should run in separate terminals:
-1. RegService:
-```
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/reg-service/service/RegService.yaml
-```
-2. TestService:
-```
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
-```
-3. CacheService:
-```
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/cache-service/service/CacheService.yaml
-```
+1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`
+2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`
+3. CacheService: `/workspaces/RLAD/utils/run_cache_service.sh`
 4. TestServiceClient:
 ```
 cd /workspaces/RLAD/services/test-service/client/

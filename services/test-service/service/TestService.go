@@ -35,6 +35,8 @@ func Start(configData []byte) error {
 	}
 	config.BaseConfig = baseConfig
 
+	TestServiceServant.InitServant(config.RegistryAddresses)
+
 	// start service
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterTestServiceServer(s, &testServiceImplementation{})
@@ -44,23 +46,23 @@ func Start(configData []byte) error {
 	return nil
 }
 
-func (obj *testServiceImplementation) HelloWorld(ctxt context.Context, _ *emptypb.Empty) (res *wrapperspb.StringValue, err error) {
+func (obj *testServiceImplementation) HelloWorld(ctxt context.Context, _ *emptypb.Empty) (*wrapperspb.StringValue, error) {
 	Logger.Printf("HelloWorld called")
 	return wrapperspb.String(TestServiceServant.HelloWorld()), nil
 }
 
-func (obj *testServiceImplementation) HelloToUser(_ context.Context, userName *wrapperspb.StringValue) (res *wrapperspb.StringValue, err error) {
+func (obj *testServiceImplementation) HelloToUser(_ context.Context, userName *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	Logger.Printf("HelloToUser called")
 	return wrapperspb.String(TestServiceServant.HelloToUser(userName.Value)), nil
 }
 
-func (obj *testServiceImplementation) Store(ctx context.Context, req *StoreKeyValue) (_ *emptypb.Empty, err error) {
+func (obj *testServiceImplementation) Store(ctx context.Context, req *StoreKeyValue) (*emptypb.Empty, error) {
 	Logger.Printf("Store called with key: %s, value: %s", req.Key, req.Value)
-	TestServiceServant.Store(req.Key, req.Value)
-	return &emptypb.Empty{}, nil
+	err := TestServiceServant.Store(req.Key, req.Value)
+	return &emptypb.Empty{}, err
 }
 
-func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.StringValue) (res *wrapperspb.StringValue, err error) {
+func (obj *testServiceImplementation) Get(ctx context.Context, key *wrapperspb.StringValue) (*wrapperspb.StringValue, error) {
 	Logger.Printf("Get called with key: %s", key.Value)
 	value, err := TestServiceServant.Get(key.Value)
 	return wrapperspb.String(value), err
@@ -74,12 +76,12 @@ func (obj *testServiceImplementation) WaitAndRand(seconds *wrapperspb.Int32Value
 	return TestServiceServant.WaitAndRand(seconds.Value, streamClient)
 }
 
-func (obj *testServiceImplementation) IsAlive(ctxt context.Context, _ *emptypb.Empty) (res *wrapperspb.BoolValue, err error) {
+func (obj *testServiceImplementation) IsAlive(ctxt context.Context, _ *emptypb.Empty) (*wrapperspb.BoolValue, error) {
 	Logger.Printf("IsAlive called")
 	return wrapperspb.Bool(TestServiceServant.IsAlive()), nil
 }
 
-func (obj *testServiceImplementation) ExtractLinksFromURL(ctx context.Context, url *ExtractLinksFromURLParameters) (res *ExtractLinksFromURLReturnedValue, err error) {
+func (obj *testServiceImplementation) ExtractLinksFromURL(ctx context.Context, url *ExtractLinksFromURLParameters) (*ExtractLinksFromURLReturnedValue, error) {
 	Logger.Printf("ExtractLinksFromURL called with url: %s", url.Url)
 	value, err := TestServiceServant.ExtractLinksFromURL(url.Url, url.Depth)
 	return &ExtractLinksFromURLReturnedValue{Links: value}, err

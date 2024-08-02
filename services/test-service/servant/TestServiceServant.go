@@ -8,20 +8,21 @@ import (
 	metaffi "github.com/MetaFFI/lang-plugin-go/api"
 	"github.com/MetaFFI/plugin-sdk/compiler/go/IDL"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
+
+	. "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/client"
 )
 
 // globals
-var pythonRuntime *metaffi.MetaFFIRuntime
-var crawlerModule *metaffi.MetaFFIModule
+var (
+	pythonRuntime *metaffi.MetaFFIRuntime
+	crawlerModule *metaffi.MetaFFIModule
+	cacheClient   *CacheServiceClient
 
-// extract_links_from_url(url: str, depth: int) -> list:
-var extract_links_from_url func(...interface{}) ([]interface{}, error)
-var cacheMap map[string]string
+	// extract_links_from_url(url: str, depth: int) -> list:
+	extract_links_from_url func(...interface{}) ([]interface{}, error)
+)
 
-// TODO: maybe it causes a problem like in RegServiceServant? resetting the cacheMap
 func init() {
-	cacheMap = make(map[string]string)
-
 	// Load the Python3.11 runtime
 	pythonRuntime = metaffi.NewMetaFFIRuntime("python311")
 	err := pythonRuntime.LoadRuntimePlugin()
@@ -48,6 +49,11 @@ func init() {
 	}
 }
 
+func InitServant(regAddresses []string) {
+	utils.Logger.Printf("TestServiceServant::InitServant() called with %v", regAddresses)
+	cacheClient = NewCacheServiceClient(regAddresses, "CacheService")
+}
+
 func HelloWorld() string {
 	return "Hello World"
 }
@@ -56,17 +62,21 @@ func HelloToUser(userName string) string {
 	return "Hello " + userName
 }
 
-func Store(key string, value string) {
-	cacheMap[key] = value
+func Store(key string, value string) error {
+	err := cacheClient.Set(key, value)
+	if err != nil {
+		utils.Logger.Printf("Store() failed: %v", err)
+	}
+	return err
 }
 
 func Get(key string) (string, error) {
-	// returns the value (or "" if not found), and a boolean indicating whether the key was found in the map
-	value, ok := cacheMap[key]
-	if !ok {
-		return value, fmt.Errorf("key not found: %v", key)
+	// returns the value (or "" if not found)
+	r, err := cacheClient.Get(key)
+	if err != nil {
+		utils.Logger.Printf("Get() failed: %v", err)
 	}
-	return value, nil
+	return r, err
 }
 
 func WaitAndRand(seconds int32, sendToClient func(x int32) error) error {

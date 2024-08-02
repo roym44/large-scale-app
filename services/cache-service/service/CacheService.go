@@ -6,9 +6,9 @@ import (
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
-	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	CacheServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/servant"
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -36,6 +36,9 @@ func Start(configData []byte) error {
 	}
 	config.BaseConfig = baseConfig
 
+	// init only when a new CacheService is starting
+	CacheServiceServant.InitServant(config.Name)
+
 	// start service
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterCacheServiceServer(s, &cacheServiceImplementation{})
@@ -44,7 +47,6 @@ func Start(configData []byte) error {
 
 	return nil
 }
-
 
 func (cs *cacheServiceImplementation) Set(_ context.Context, params *SetKeyValueReq) (_ *emptypb.Empty, err error) {
 	Logger.Printf("Set called with key: %s, value: %s", params.Key, params.Value)
@@ -72,4 +74,3 @@ func (cs *cacheServiceImplementation) IsAlive(_ context.Context, _ *emptypb.Empt
 	IsAlive := CacheServiceServant.IsAlive()
 	return wrapperspb.Bool(IsAlive), nil
 }
-

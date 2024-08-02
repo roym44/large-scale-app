@@ -35,26 +35,15 @@ func IsFirst() bool {
 func InitServant(chord_name string) {
 	utils.Logger.Printf("CacheServiceServant::InitServant() called with %v", chord_name)
 	var err error
-	// if chord_name == "8502" {
-	// }
-	// TODO: what happens when a second RegService needs to join? how does he know if he's first without calling NewChord first?
-	chordNode, err = dht.NewChord("root", 2099)
-	if err != nil {
-		utils.Logger.Fatalf("could not create new chord: %v", err)
-		return
-	}
-	utils.Logger.Printf("NewChord returned: %v", chordNode)
 
-	is_first, err = chordNode.IsFirst()
-	if err != nil {
-		utils.Logger.Fatalf("could not call IsFirst: %v", err)
-		return
-	}
-	utils.Logger.Printf("chordNode.IsFirst() result: %v", is_first)
-
-	// join
-	if !is_first {
-		utils.Logger.Printf("not first")
+	if chord_name == "root" {
+		chordNode, err = dht.NewChord(chord_name, 2099)
+		if err != nil {
+			utils.Logger.Fatalf("could not create new chord: %v", err)
+			return
+		}
+		utils.Logger.Printf("NewChord returned: %v", chordNode)
+	} else {
 		// join already existing "root" with a new chord_name
 		chordNode, err = dht.JoinChord(chord_name, "root", 2099)
 		if err != nil {
@@ -62,14 +51,18 @@ func InitServant(chord_name string) {
 			return
 		}
 		utils.Logger.Printf("JoinChord returned: %v", chordNode)
-	} else {
-		// we are root, initialize the cache map :)
-		utils.Logger.Printf("first!")
 	}
+	// TODO: consider removing later
+	// check
+	is_first, err = chordNode.IsFirst()
+	if err != nil {
+		utils.Logger.Fatalf("could not call IsFirst: %v", err)
+		return
+	}
+	utils.Logger.Printf("chordNode.IsFirst() result: %v", is_first)
 }
 
 func Set(key string, value string) error {
-
 	err := chordNode.Set(key, value)
 	if err != nil {
 		utils.Logger.Printf("chordNode.Set failed with error: %v", err)
@@ -82,7 +75,7 @@ func Set(key string, value string) error {
 func Get(key string) (string, error) {
 	// returns the value (or "" if not found), and a boolean indicating whether the key was found in the chord
 	var err error
-	var value string 
+	var value string
 	if isInChord(key) {
 		// get the current list
 		value, err = chordNode.Get(key)
@@ -104,5 +97,3 @@ func Delete(key string) error {
 func IsAlive() bool {
 	return true
 }
-
-

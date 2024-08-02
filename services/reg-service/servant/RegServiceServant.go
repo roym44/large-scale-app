@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	cacheservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	dht "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant/dht"
 	testservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
-	cacheservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -36,7 +36,7 @@ func decodeStrings(enc string) []string {
 	return strings.Split(enc, ",")
 }
 
-func isInChord(service_name string) bool {
+func isInChord(key string) bool {
 	keys, err := chordNode.GetAllKeys()
 	if err != nil {
 		utils.Logger.Fatalf("chordNode.GetAllKeys failed with error: %v", err)
@@ -44,7 +44,7 @@ func isInChord(service_name string) bool {
 
 	// check if the service is in the keys list
 	for _, item := range keys {
-		if item == service_name {
+		if item == key {
 			return true
 		}
 	}
@@ -53,33 +53,22 @@ func isInChord(service_name string) bool {
 
 // helper functions
 func IsFirst() bool {
-	utils.Logger.Printf("IsFirst() called, result: %v", is_first)
 	return is_first
 }
 
 func InitServant(chord_name string) {
-	utils.Logger.Printf("RegServiceServant::InitServant() called with %v", chord_name)
+	utils.Logger.Printf("RegServiceServant::InitServant() called with %s", chord_name)
 	var err error
-	// if chord_name == "8502" {
-	// }
-	// TODO: what happens when a second RegService needs to join? how does he know if he's first without calling NewChord first?
-	chordNode, err = dht.NewChord("root", 1099)
-	if err != nil {
-		utils.Logger.Fatalf("could not create new chord: %v", err)
-		return
-	}
-	utils.Logger.Printf("NewChord returned: %v", chordNode)
 
-	is_first, err = chordNode.IsFirst()
-	if err != nil {
-		utils.Logger.Fatalf("could not call IsFirst: %v", err)
-		return
-	}
-	utils.Logger.Printf("chordNode.IsFirst() result: %v", is_first)
-
-	// join
-	if !is_first {
-		utils.Logger.Printf("not first")
+	if chord_name == "root" {
+		chordNode, err = dht.NewChord(chord_name, 1099)
+		if err != nil {
+			utils.Logger.Fatalf("could not create new chord: %v", err)
+			return
+		}
+		utils.Logger.Printf("NewChord returned: %v", chordNode)
+		cacheMap = make(map[string]*NodeStatus)
+	} else {
 		// join already existing "root" with a new chord_name
 		chordNode, err = dht.JoinChord(chord_name, "root", 1099)
 		if err != nil {
@@ -87,11 +76,15 @@ func InitServant(chord_name string) {
 			return
 		}
 		utils.Logger.Printf("JoinChord returned: %v", chordNode)
-	} else {
-		// we are root, initialize the cache map :)
-		utils.Logger.Printf("first!")
-		cacheMap = make(map[string]*NodeStatus)
 	}
+	// TODO: consider removing later
+	// check
+	is_first, err = chordNode.IsFirst()
+	if err != nil {
+		utils.Logger.Fatalf("could not call IsFirst: %v", err)
+		return
+	}
+	utils.Logger.Printf("chordNode.IsFirst() result: %v", is_first)
 }
 
 // Registry API
@@ -201,12 +194,12 @@ func Discover(service_name string) ([]string, error) {
 
 // TestServiceClient code (we duplicate some code for the IsAlive grpc connection)
 type TestServiceClient struct {
-	Address string // we have a specified address, not using the registry
+	Address      string // we have a specified address, not using the registry
 	CreateClient func(grpc.ClientConnInterface) testservicecommon.TestServiceClient
 }
 
 type CacheServiceClient struct {
-	Address string // we have a specified address, not using the registry
+	Address      string // we have a specified address, not using the registry
 	CreateClient func(grpc.ClientConnInterface) cacheservicecommon.CacheServiceClient
 }
 

@@ -3,6 +3,7 @@ package RegServiceClient
 import (
 	context "context"
 	"fmt"
+	"math/rand"
 
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
 	"google.golang.org/grpc"
@@ -17,8 +18,8 @@ type RegServiceClient struct {
 }
 
 func (obj *RegServiceClient) Connect() (res service.RegServiceClient, closeFunc func(), err error) {
-	// TODO: we currently take the first reg address
-	conn, err := grpc.Dial(obj.RegistryAddresses[0], grpc.WithInsecure(), grpc.WithBlock())
+	randomIndex := rand.Intn(len(obj.RegistryAddresses))
+	conn, err := grpc.Dial(obj.RegistryAddresses[randomIndex], grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		var empty service.RegServiceClient
 		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.RegistryAddresses[0], err)

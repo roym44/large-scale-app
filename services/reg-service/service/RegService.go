@@ -49,7 +49,7 @@ func startRegService(name string, grpcListenPort int, bindgRPCToService func(s g
 	bindgRPCToService(grpcServer)
 
 	// init only when a new RegService is starting
-	RegServiceServant.InitServant(name) // chord name will be the address
+	RegServiceServant.InitServant(name)
 
 	// IsAlive check performed only by the "root" node
 	if RegServiceServant.IsFirst() {

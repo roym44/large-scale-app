@@ -44,7 +44,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-
 func TestSetGetAndDelete(t *testing.T) {
 	c := NewCacheServiceClient(conf.RegistryAddresses, conf.Type)
 	err := c.Set("key1", "value1")
@@ -91,4 +90,3 @@ func TestIsAlive(t *testing.T) {
 	}
 	t.Logf("Response: %v", r)
 }
-

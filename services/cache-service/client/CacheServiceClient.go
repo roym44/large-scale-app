@@ -1,14 +1,13 @@
-package TestServiceClient
+package CacheServiceClient
 
 import (
 	context "context"
 	"fmt"
 
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type CacheServiceClient struct {
@@ -52,16 +51,16 @@ func (obj *CacheServiceClient) Get(key string) (string, error) {
 	return r.Value, nil
 }
 
-func (obj *CacheServiceClient) Get(key string) error {
+func (obj *CacheServiceClient) Delete(key string) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return "", fmt.Errorf("could not connect to server: %v", err)
+		return fmt.Errorf("could not connect to server: %v", err)
 	}
 	defer closeFunc()
 	// Call the Delete RPC function
 	_, err = c.Delete(context.Background(), &service.GetKeyReq{Key: key})
 	if err != nil {
-		return "", fmt.Errorf("could not call Delete: %v", err)
+		return fmt.Errorf("could not call Delete: %v", err)
 	}
 	return nil
 }
@@ -79,4 +78,3 @@ func (obj *CacheServiceClient) IsAlive() (bool, error) {
 	}
 	return r.Value, nil
 }
-

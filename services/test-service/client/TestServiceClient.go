@@ -2,6 +2,7 @@ package TestServiceClient
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
@@ -50,6 +51,41 @@ func (obj *TestServiceClient) HelloToUser(userName string) (string, error) {
 	}
 	return r.Value, nil
 }
+
+func (obj *TestServiceClient) HelloWorldAsync() (func() (string, error), error) {
+	mqsocket, err := obj.ConnectMQ()
+	if err != nil {
+		return nil, err
+	}
+	msg, err := services.NewMarshaledCallParameter("HelloWorld", &emptypb.Empty{})
+
+	if err != nil {
+		return nil, err
+	}
+	err = mqsocket.Send(msg)
+	if err != nil {
+		return nil, err
+	}
+	// return function (future pattern)
+	ret := func() (string, error) {
+		defer mqsocket.CloseSocket()
+		rv, err := mqsocket.Receive()
+		if err != nil {
+			return "", err
+		}
+		if rv.Error != "" {
+			return "", errors.New(rv.Error)
+		}
+		str := &wrapperspb.StringValue{}
+		err = rv.ExtractInnerMessage(str)
+		if err != nil {
+			return "", err
+		}
+		return str.Value, nil
+	}
+	return ret, nil
+}
+
 func (obj *TestServiceClient) Store(key string, value string) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {

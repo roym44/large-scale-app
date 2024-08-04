@@ -43,7 +43,7 @@ func Start(configData []byte) error {
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterCacheServiceServer(s, &cacheServiceImplementation{})
 	}
-	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
+	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService, nil) // randomly pick a port
 
 	return nil
 }

@@ -42,40 +42,30 @@ cd /workspaces/RLAD/services/test-service/client/
 go test -v
 ```
 
-## Section 4
-### Cluster & Registry
-First run: `/workspaces/RLAD/utils/regservice_proto.sh`\
-Build: `/workspaces/RLAD/build.sh`\
-We have three components now that should run in separate terminals:
-1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`\
-Unit testing for RegService:
-```
-cd /workspaces/RLAD/services/reg-service/client/
-go test -v
-```
-2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`\
-3. TestServiceClient:
-```
-cd /workspaces/RLAD/services/test-service/client/
-go test -v
-```
-
-### Cluster Registry Service & Cache Service
+## Section 4 (Cluster Registry Service & Cache Service)
 Chord DHT fixes:
 - replace `Chord.class`
 - `mv /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so`
 - `chmod 777 /usr/local/metaffi/xllr.openjdk.so`
+
 We have the Chord DHT test:
 ```
 cd /workspaces/RLAD/services/reg-service/servant/dht
 go test -v
 ```
+First run: `/workspaces/RLAD/utils/regservice_proto.sh`\
+Build: `/workspaces/RLAD/build.sh`\
 We have three components now that should run in separate terminals:
-1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`
-2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`
-3. CacheService: `/workspaces/RLAD/utils/run_cache_service.sh`
-4. TestServiceClient:
+Run using `/workspaces/RLAD/output/start.sh`
+1. RegService - root + another
+2. CacheService - root + another
+3. TestService
+
+Then we can run our tests:
 ```
 cd /workspaces/RLAD/services/test-service/client/
 go test -v
 ```
+
+## Section 5 (Message Queue)
+First run: `/workspaces/RLAD/utils/mq_proto.sh`\

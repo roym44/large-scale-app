@@ -2,12 +2,14 @@ package TestService
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *
+	"go.starlark.net/lib/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -17,6 +19,27 @@ import (
 
 type testServiceImplementation struct {
 	UnimplementedTestServiceServer
+}
+
+var serviceInstance *testServiceImplementation
+
+func messageHandler(method string, parameters []byte) (response proto.Message, err error) {
+	// TODO: support more methods
+	switch method {
+	case "ExtractLinksFromURL":
+		p := &ExtractLinksFromURLParameters{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.ExtractLinksFromURL(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("MQ message called unknown method: %v", method)
+	}
 }
 
 func Start(configData []byte) error {
@@ -39,9 +62,9 @@ func Start(configData []byte) error {
 
 	// start service
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
-		RegisterTestServiceServer(s, &testServiceImplementation{})
+		RegisterTestServiceServer(s, serviceInstance)
 	}
-	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
+	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService, messageHandler) // randomly pick a port
 
 	return nil
 }

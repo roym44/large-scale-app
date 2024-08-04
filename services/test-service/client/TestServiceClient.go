@@ -15,10 +15,12 @@ type TestServiceClient struct {
 	services.ServiceClientBase[service.TestServiceClient]
 }
 
-func NewTestServiceClient(address string) *TestServiceClient {
+func NewTestServiceClient(addresses []string, service_name string) *TestServiceClient {
 	return &TestServiceClient{
 		ServiceClientBase: services.ServiceClientBase[service.TestServiceClient]{
-			Address: address, CreateClient: service.NewTestServiceClient},
+			RegistryAddresses: addresses,
+			ServiceName:       service_name,
+			CreateClient:      service.NewTestServiceClient},
 	}
 }
 func (obj *TestServiceClient) HelloWorld() (string, error) {
@@ -79,7 +81,7 @@ func (obj *TestServiceClient) Get(key string) (string, error) {
 func (obj *TestServiceClient) WaitAndRand(seconds int32) (func() (int32, error), error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect %v. Error: %v", obj.Address, err)
+		return nil, fmt.Errorf("could not connect to server: %v", err)
 	}
 	r, err := c.WaitAndRand(context.Background(), wrapperspb.Int32(seconds))
 	if err != nil {

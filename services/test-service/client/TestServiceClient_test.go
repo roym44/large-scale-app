@@ -1,11 +1,51 @@
 package TestServiceClient
 
 import (
+	"log"
+	"os"
 	"testing"
+
+	"github.com/TAULargeScaleWorkshop/RLAD/config"
+	"gopkg.in/yaml.v2"
 )
 
+// global config
+var conf config.TestConfig
+
+// TestMain is the entry point for testing
+func TestMain(m *testing.M) {
+	// Load the configuration
+	configFile := "../service/TestService.yaml"
+	configData, err := os.ReadFile(configFile)
+	if err != nil {
+		log.Fatalf("error reading file: %v", err)
+		os.Exit(2)
+	}
+
+	// get base config
+	var baseConfig config.BaseConfig
+	err = yaml.Unmarshal(configData, &baseConfig) // parses YAML
+	if err != nil {
+		log.Fatalf("error unmarshaling BaseConfig data: %v", err)
+	}
+
+	// get TestService config
+	err = yaml.Unmarshal(configData, &conf) // parses YAML
+	if err != nil {
+		log.Fatalf("error unmarshaling TestConfig data: %v", err)
+	}
+	conf.BaseConfig = baseConfig
+	log.Printf("loaded config %s", configData)
+
+	// Run the tests
+	code := m.Run()
+
+	// Exit with the test run's exit code
+	os.Exit(code)
+}
+
 func TestHelloWorld(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.HelloWorld()
 	if err != nil {
 		t.Fatalf("could not call HelloWorld: %v", err)
@@ -15,7 +55,7 @@ func TestHelloWorld(t *testing.T) {
 }
 
 func TestHelloToUser(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.HelloToUser("Zvi")
 	if err != nil {
 		t.Fatalf("could not call HelloToUser: %v", err)
@@ -25,7 +65,7 @@ func TestHelloToUser(t *testing.T) {
 }
 
 func TestStoreAndGet(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	err := c.Store("key1", "value1")
 	if err != nil {
 		t.Fatalf("could not call Store: %v", err)
@@ -44,7 +84,7 @@ func TestStoreAndGet(t *testing.T) {
 }
 
 func TestWaitAndRand(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	resPromise, err := c.WaitAndRand(3)
 	if err != nil {
 		t.Fatalf("Calling WaitAndRand failed: %v", err)
@@ -59,7 +99,7 @@ func TestWaitAndRand(t *testing.T) {
 }
 
 func TestIsAlive(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.IsAlive()
 	if err != nil {
 		t.Fatalf("could not call IsAlive: %v", err)
@@ -73,7 +113,7 @@ func TestIsAlive(t *testing.T) {
 }
 
 func TestExtractLinksFromURL(t *testing.T) {
-	c := NewTestServiceClient("localhost:50051")
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 
 	url := "https://www.microsoft.com"
 	links, err := c.ExtractLinksFromURL(url, 1)

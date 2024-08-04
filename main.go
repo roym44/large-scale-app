@@ -5,7 +5,10 @@ import (
 	"os"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
+	RegService "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/service"
 	TestService "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/service"
+	CacheService "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/service"
+
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"gopkg.in/yaml.v2"
 )
@@ -23,17 +26,20 @@ func main() {
 		os.Exit(2)
 	}
 
-	var config config.ConfigBase
+	var config config.BaseConfig
 	err = yaml.Unmarshal(configData, &config) // parses YAML
 	if err != nil {
 		log.Fatalf("error unmarshaling data: %v", err)
 		os.Exit(3)
 	}
-
+	utils.Logger.Printf("Loading service type: %v\n", config.Type)
 	switch config.Type {
 	case "TestService":
-		utils.Logger.Printf("Loading service type: %v\n", config.Type)
 		TestService.Start(configData)
+	case "RegService":
+		RegService.Start(configData)
+	case "CacheService":
+		CacheService.Start(configData)
 	default:
 		utils.Logger.Fatalf("Unknown configuration type: %v", config.Type)
 		os.Exit(4)

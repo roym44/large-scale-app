@@ -21,6 +21,15 @@ type testServiceImplementation struct {
 	UnimplementedTestServiceServer
 }
 
+type mockWaitAndRandServer struct {
+    grpc.ServerStream
+    sendFunc func(msg *wrapperspb.Int32Value) error
+}
+
+func (m *mockWaitAndRandServer) Send(msg *wrapperspb.Int32Value) error {
+    return m.sendFunc(msg)
+}
+
 var serviceInstance *testServiceImplementation
 
 func messageHandler(method string, parameters []byte) (response proto.Message, err error) {
@@ -37,6 +46,68 @@ func messageHandler(method string, parameters []byte) (response proto.Message, e
 			return nil, err
 		}
 		return res, nil
+	case "Get":
+		p := &wrapperspb.StringValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.Get(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "Set":
+		p := &StoreKeyValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.Store(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "HelloWorld":
+		p := emptypb.Empty{}
+		res, err := serviceInstance.HelloWorld(context.Background(), &p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "HelloToUser":
+		p := &wrapperspb.StringValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.HelloToUser(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "WaitAndRand":
+		p := &wrapperspb.Int32Value{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+
+		var receivedMessages []int32
+
+		// Define a mock stream that collects responses
+		mockStream := &mockWaitAndRandServer{
+			sendFunc: func(msg *wrapperspb.Int32Value) error {
+				receivedMessages = append(receivedMessages, msg.Value)
+				return nil
+			},
+		}
+
+		err = serviceInstance.WaitAndRand(p, mockStream)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("MQ message called unknown method: %v", method)
 	}

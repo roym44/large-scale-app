@@ -9,6 +9,7 @@ import (
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type ServiceClientBase[client_t any] struct {
@@ -72,4 +73,22 @@ func (obj *ServiceClientBase[client_t]) Connect() (res client_t, closeFunc func(
 	}
 	c := obj.CreateClient(conn)
 	return c, func() { conn.Close() }, nil
+}
+
+func NewMarshaledCallParameter(method string, proto_data proto.Message) ([]byte, error) {
+	var msg []byte
+
+	// handle data
+	data, err := proto.Marshal(proto_data)
+	if err != nil {
+		Logger.Printf("NewMarshaledCallParameter(): Marshal(proto_data) failed: %v\n", err)
+	}
+
+	// handle call params
+	callParams := &CallParameters{Method: method, Data: data}
+	msg, err = proto.Marshal(callParams)
+	if err != nil {
+		Logger.Printf("NewMarshaledCallParameter(): Marshal(callParams) failed: %v\n", err)
+	}
+	return msg, err
 }

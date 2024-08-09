@@ -7,8 +7,8 @@ import (
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"github.com/pebbe/zmq4"
-	"go.starlark.net/lib/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 func bindMQToService(listenPort int, messageHandler func(method string,
@@ -46,13 +46,18 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 
 			// handle the request in a new goroutine
 			go func() {
+				// unpacking
 				callParams := &CallParameters{}
 				err := proto.Unmarshal(data, callParams)
 				if err != nil {
 					Logger.Printf("Unmarshal failed: %v\n", err)
 					return
 				}
+
+				// call the method
 				response, err := messageHandler(callParams.Method, callParams.Data)
+
+				// packing
 				returnValue := &ReturnValue{}
 				if err != nil {
 					Logger.Printf("messageHandler failed with: %v\n", err)

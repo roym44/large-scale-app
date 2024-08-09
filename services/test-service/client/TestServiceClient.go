@@ -7,7 +7,7 @@ import (
 
 	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
-
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -38,6 +38,55 @@ func (obj *TestServiceClient) HelloWorld() (string, error) {
 	return r.Value, nil
 }
 
+func (obj *TestServiceClient) HelloWorldAsync() (func() (string, error), error) {
+	mqsocket, err := obj.ConnectMQ()
+	if err != nil {
+		return nil, fmt.Errorf("HelloWorldAsync(): ConnectMQ failed: %v\n", err)
+	}
+
+	// packing
+	msg, err := services.NewMarshaledCallParameter("HelloWorld", &emptypb.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("HelloWorldAsync(): NewMarshaledCallParameter failed: %v\n", err)
+	}
+
+	_, err = mqsocket.SendBytes(msg, 0)
+	if err != nil {
+		return nil, fmt.Errorf("HelloWorldAsync(): SendBytes failed: %v\n", err)
+	}
+
+	// return function (future pattern)
+	ret := func() (string, error) {
+		defer mqsocket.Close()
+		rv, err := mqsocket.RecvBytes(0)
+		if err != nil {
+			return "", fmt.Errorf("HelloWorldAsync(): RecvBytes failed: %v\n", err)
+		}
+
+		returnValue := &services.ReturnValue{}
+		// handle return value
+		err = proto.Unmarshal(rv, returnValue)
+		if err != nil {
+			return "", fmt.Errorf("HelloWorldAsync(): Unmarshal(rv) failed: %v\n", err)
+		}
+
+		// handle data
+		str := &wrapperspb.StringValue{}
+		err = proto.Unmarshal(returnValue.Data, str)
+		if err != nil {
+			return "", fmt.Errorf("HelloWorldAsync(): Unmarshal(returnValue.Data) failed: %v\n", err)
+		}
+
+		// error
+		if returnValue.Error != "" {
+			err = errors.New(returnValue.Error)
+		}
+		return str.Value, err
+	}
+
+	return ret, nil
+}
+
 func (obj *TestServiceClient) HelloToUser(userName string) (string, error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
@@ -50,40 +99,6 @@ func (obj *TestServiceClient) HelloToUser(userName string) (string, error) {
 		return "", fmt.Errorf("could not call HelloToUser: %v", err)
 	}
 	return r.Value, nil
-}
-
-func (obj *TestServiceClient) HelloWorldAsync() (func() (string, error), error) {
-	mqsocket, err := obj.ConnectMQ()
-	if err != nil {
-		return nil, err
-	}
-	msg, err := services.NewMarshaledCallParameter("HelloWorld", &emptypb.Empty{})
-
-	if err != nil {
-		return nil, err
-	}
-	err = mqsocket.Send(msg)
-	if err != nil {
-		return nil, err
-	}
-	// return function (future pattern)
-	ret := func() (string, error) {
-		defer mqsocket.CloseSocket()
-		rv, err := mqsocket.Receive()
-		if err != nil {
-			return "", err
-		}
-		if rv.Error != "" {
-			return "", errors.New(rv.Error)
-		}
-		str := &wrapperspb.StringValue{}
-		err = rv.ExtractInnerMessage(str)
-		if err != nil {
-			return "", err
-		}
-		return str.Value, nil
-	}
-	return ret, nil
 }
 
 func (obj *TestServiceClient) Store(key string, value string) error {

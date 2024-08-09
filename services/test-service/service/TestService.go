@@ -9,9 +9,9 @@ import (
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *
-	"go.starlark.net/lib/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v2"
@@ -22,12 +22,12 @@ type testServiceImplementation struct {
 }
 
 type mockWaitAndRandServer struct {
-    grpc.ServerStream
-    sendFunc func(msg *wrapperspb.Int32Value) error
+	grpc.ServerStream
+	sendFunc func(msg *wrapperspb.Int32Value) error
 }
 
 func (m *mockWaitAndRandServer) Send(msg *wrapperspb.Int32Value) error {
-    return m.sendFunc(msg)
+	return m.sendFunc(msg)
 }
 
 var serviceInstance *testServiceImplementation

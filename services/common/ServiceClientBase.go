@@ -29,14 +29,17 @@ func (obj *ServiceClientBase[client_t]) getMQNodes() ([]string, error) {
 
 func (obj *ServiceClientBase[client_t]) ConnectMQ() (socket *zmq4.Socket, err error) {
 	nodes, err := obj.getMQNodes()
+	Logger.Printf("ConnectMQ(): got MQ nodes %v", nodes)
 	if err != nil {
 		Logger.Printf("Error calling getMQNodes: %s", err)
 	}
 	socket, err = zmq4.NewSocket(zmq4.REP)
+	Logger.Printf("ConnectMQ(): created NewSocket %v", socket)
 	if err != nil {
 		Logger.Fatalf("Failed to create a new zmq socket: %v", err)
 	}
 	for _, node := range nodes {
+		Logger.Printf("ConnectMQ(): calling Connect on nodes %s", node)
 		err = socket.Connect(node)
 		if err != nil {
 			Logger.Printf("Failed to connect a zmq socket: %v", err)

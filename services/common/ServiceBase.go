@@ -13,6 +13,8 @@ import (
 
 func bindMQToService(listenPort int, messageHandler func(method string,
 	parameters []byte) (response proto.Message, err error)) (startMQ func(), listeningAddress string) {
+	Logger.Printf("bindMQToService() called with listenPort %d", listenPort)
+
 	socket, err := zmq4.NewSocket(zmq4.REP)
 	if err != nil {
 		Logger.Fatalf("Failed to create a new zmq socket: %v", err)
@@ -22,18 +24,23 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 	} else {
 		listeningAddress = fmt.Sprintf("tcp://127.0.0.1:%v", listenPort)
 	}
+
+	Logger.Printf("bindMQToService() calling Bind on %s", listeningAddress)
 	err = socket.Bind(listeningAddress)
 	if err != nil {
 		Logger.Fatalf("Failed to bind a zmq socket: %v", err)
 	}
+
 	listeningAddress, err = socket.GetLastEndpoint()
 	if err != nil {
 		Logger.Fatalf("Failed to get listetning address of zmq socket: %v", err)
 	}
+	Logger.Printf("bindMQToService() GetLastEndpoint returned %s", listeningAddress)
 
 	startMQ = func() {
 		for {
 			Logger.Printf("startMQ(): entered for loop")
+			// TODO: flag for no wait
 			data, readerr := socket.RecvBytes(0)
 			Logger.Printf("startMQ(): called RecvBytes")
 			if err != nil {
@@ -127,9 +134,7 @@ func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgR
 	// mq
 	if messageHandler != nil {
 		start_mq, listening_address_mq := bindMQToService(0, messageHandler)
-		listeningAddress = listening_address_mq // override the gRPC address with mq address
-		// serviceName += "MQ"
-		Logger.Printf("MQ: %s starts listening on %s\n", serviceName + "MQ", listeningAddress)
+		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceName+"MQ", listening_address_mq)
 		go start_mq()
 	}
 

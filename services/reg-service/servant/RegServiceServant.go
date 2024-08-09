@@ -303,6 +303,9 @@ func IsAliveCheck() {
 				case "TestService":
 					c := NewTestServiceClient(address)
 					alive, err = c.IsAlive()
+				//This means that MQ service will never be unregister
+				case "TestServiceMQ":
+					alive = true
 				case "CacheService":
 					c := NewCacheServiceClient(address)
 					alive, err = c.IsAlive()

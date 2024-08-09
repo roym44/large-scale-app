@@ -127,14 +127,19 @@ func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgR
 	}
 	bindgRPCToService(grpcServer)
 
-	// make sure it registers to the registry service
+	//gRPC: make sure it registers to the registry service 
 	unregister := registerAddress(serviceName, regAddresses, listeningAddress)
 	defer unregister()
 
 	// mq
 	if messageHandler != nil {
+		serviceNameMQ := serviceName+"MQ"
 		start_mq, listening_address_mq := bindMQToService(0, messageHandler)
-		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceName+"MQ", listening_address_mq)
+		
+		//MQ: make sure it registers to the registry service 
+		unregister := registerAddress(serviceNameMQ, regAddresses, listening_address_mq)
+		defer unregister()
+		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceNameMQ, listening_address_mq)
 		go start_mq()
 	}
 

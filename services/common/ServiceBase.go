@@ -33,7 +33,9 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 
 	startMQ = func() {
 		for {
+			Logger.Printf("startMQ(): entered for loop")
 			data, readerr := socket.RecvBytes(0)
+			Logger.Printf("startMQ(): called RecvBytes")
 			if err != nil {
 				Logger.Printf("Failed to receive bytes from MQ socket: %v\n", readerr)
 				continue
@@ -46,6 +48,7 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 
 			// handle the request in a new goroutine
 			go func() {
+				Logger.Printf("startMQ func(): unpacking")
 				// unpacking
 				callParams := &CallParameters{}
 				err := proto.Unmarshal(data, callParams)
@@ -55,9 +58,11 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 				}
 
 				// call the method
+				Logger.Printf("startMQ func(): calling messageHandler")
 				response, err := messageHandler(callParams.Method, callParams.Data)
 
 				// packing
+				Logger.Printf("startMQ func(): got response")
 				returnValue := &ReturnValue{}
 				if err != nil {
 					Logger.Printf("messageHandler failed with: %v\n", err)
@@ -123,11 +128,12 @@ func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgR
 	if messageHandler != nil {
 		start_mq, listening_address_mq := bindMQToService(0, messageHandler)
 		listeningAddress = listening_address_mq // override the gRPC address with mq address
-		serviceName += "MQ"
+		// serviceName += "MQ"
+		Logger.Printf("MQ: %s starts listening on %s\n", serviceName + "MQ", listeningAddress)
 		go start_mq()
 	}
 
-	Logger.Printf("%s starts listening on %s\n", serviceName, listeningAddress)
+	Logger.Printf("GRPC: %s starts listening on %s\n", serviceName, listeningAddress)
 	startListening()
 	return nil
 }

@@ -54,6 +54,21 @@ func TestHelloWorld(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
+func TestHelloWorldAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	r, err := c.HelloWorldAsync()
+	if err != nil {
+		t.Fatalf("could not call HelloWorld: %v", err)
+		return
+	}
+	res, err := r()
+	if err != nil {
+		t.Fatalf("HelloWorld returned error : %v", err)
+		return
+	}
+	t.Logf("Response: %v", res)
+}
+
 func TestHelloToUser(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.HelloToUser("Zvi")

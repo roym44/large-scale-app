@@ -34,6 +34,7 @@ var serviceInstance *testServiceImplementation
 
 func messageHandler(method string, parameters []byte) (response proto.Message, err error) {
 	// TODO: support more methods
+	Logger.Printf("messageHandler")
 	switch method {
 	case "ExtractLinksFromURL":
 		p := &ExtractLinksFromURLParameters{}

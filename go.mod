@@ -8,7 +8,6 @@ require (
 	github.com/MetaFFI/plugin-sdk v0.1.2
 	github.com/golang/protobuf v1.5.4
 	github.com/pebbe/zmq4 v1.2.11
-	go.starlark.net v0.0.0-20240725214946-42030a7cedce
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0

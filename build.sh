@@ -5,9 +5,11 @@ chmod 777 /usr/local/metaffi/xllr.openjdk.so
 # dependencies
 sudo apt-get update && sudo apt-get install -y python3.11-dev
 python3.11 -m pip install beautifulsoup4 requests
+
+#go get github.com/MetaFFI/lang-plugin-go@v0.1.2
+#go mod tidy
 go get
-go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-go mod tidy
+
 
 # -buildvcs=false is used to supress weird git error 
 go build -o /workspaces/RLAD/output/large-scale-workshop -buildvcs=false

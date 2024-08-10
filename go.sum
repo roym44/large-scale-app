@@ -1,3 +1,5 @@
+github.com/MetaFFI/lang-plugin-go v0.1.2 h1:7tzr/PA2m0nvkPw2V40DmKttzP/peUeoTjPKTQsAk9Y=
+github.com/MetaFFI/lang-plugin-go v0.1.2/go.mod h1:Ajqpc7z2LJe1Kj3Pbi54ms6+Pt1DUmO0ADYamL8VRRc=
 github.com/MetaFFI/lang-plugin-go/api v0.0.0-20240528185259-d34b330dbc2d h1:o9SBSpViV+A4CR2D+kd9e8clY4sRhKbo532SGF6BYMg=
 github.com/MetaFFI/lang-plugin-go/api v0.0.0-20240528185259-d34b330dbc2d/go.mod h1:jYqohAnWJ5yL0/xr+4IH/Yg555qQvskmNk9dAZft+yE=
 github.com/MetaFFI/lang-plugin-go/go-runtime v0.0.0-20240423121836-171589282d0a h1:k0DkZjvXxIB8jqNtwz3EZ+d+4X2RDUL3CDqTWWmCZSA=

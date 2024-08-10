@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/MetaFFI/lang-plugin-go v0.1.2 // indirect
 	github.com/timandy/routine v1.1.3 // indirect
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect

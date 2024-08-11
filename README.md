@@ -1,21 +1,31 @@
-# RLAD
+# Large Scale Workshop
 
-Large Scale Workshop
+This project displays a basic distributed, service-oriented system including the following concepts: Remote Procedure Call, Service Discovery, Distributed cache and Message Queue.
 
-## General Notes
+The system has three sevices:
+- Test Service - provides several functionalities
+- Registry Service - provides service discovery
+- Cache Service - provides in-memory cache using Chord Distributed Hash Table
+
+
+## Getting started
+- `git clone`
+- load within the project dev container
 - the image mounts the large-scale-workshop directory into: `/workspaces/<cloned-repo-name>/`
-- some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
 - our "module name" is `github.com/TAULargeScaleWorkshop/RLAD`
 
-### Extra installations
+## Building
+In the root directory run `./build.sh` that installs required dependencies and builds the app to `./output/`.
+
+## Running
+Run the app using `./output/start.sh` that starts 3 services of each type: Registry, Cache and Test.
+
+## Testing
+In order to test the main service (TestService), please run:
 ```
-sudo apt-get update && sudo apt-get install -y python3.11-dev
-python3.11 -m pip install beautifulsoup4 requests
-go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-go mod tidy
 ```
 
-## Section 1 - running main.go
+
 ```
 go get
 go build -o ./output/large-scale-workshop

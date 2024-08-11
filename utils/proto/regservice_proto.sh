@@ -6,5 +6,5 @@ protoc -I=. \
        --go_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/reg-service \
        --go-grpc_out=. \
        --go-grpc_opt=paths=source_relative \
-       --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/regservice/RegService.proto \
+       --go-grpc_opt=MRegService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/RegService.proto \
        RegService.proto

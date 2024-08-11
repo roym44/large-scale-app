@@ -200,20 +200,43 @@ func TestIsAliveAsync(t *testing.T) {
 	t.Logf("Response: %v", res)
 }
 
-// func TestExtractLinksFromURL(t *testing.T) {
-// 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+func TestExtractLinksFromURL(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 
-// 	url := "https://www.microsoft.com"
-// 	links, err := c.ExtractLinksFromURL(url, 1)
-// 	if err != nil {
-// 		t.Fatalf("ExtractLinksFromURL failed with error: %v", err)
-// 	}
+	url := "https://www.microsoft.com"
+	links, err := c.ExtractLinksFromURL(url, 1)
+	if err != nil {
+		t.Fatalf("ExtractLinksFromURL failed with error: %v", err)
+	}
 
-// 	// make sure you got some links
-// 	if len(links) == 0 {
-// 		t.Fatalf("ExtractLinksFromURL returned no links")
-// 	}
+	// make sure you got some links
+	if len(links) == 0 {
+		t.Fatalf("ExtractLinksFromURL returned no links")
+	}
 
-// 	// print the links
-// 	t.Logf("links: %v\n", links)
-// }
+	// print the links
+	t.Logf("links: %v\n", links)
+}
+
+func TestExtractLinksFromURLAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	url := "https://www.microsoft.com"
+	r, err := c.ExtractLinksFromURLAsync(url, 1)
+	if err != nil {
+		t.Fatalf("could not call ExtractLinksFromURLAsync: %v", err)
+		return
+	}
+	links, err := r()
+	if err != nil {
+		t.Fatalf("ExtractLinksFromURLAsync returned error : %v", err)
+		return
+	}
+
+	// make sure you got some links
+	if len(links) == 0 {
+		t.Fatalf("ExtractLinksFromURL returned no links")
+	}
+
+	// print the links
+	t.Logf("links: %v\n", links)
+}

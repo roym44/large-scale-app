@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
 	client "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-client"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 
@@ -138,7 +137,7 @@ func (obj *TestServiceClient) StoreAsync(key string, value string) (func() error
 			return fmt.Errorf("StoreAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
@@ -253,7 +252,6 @@ func (obj *TestServiceClient) IsAliveAsync() (func() (bool, error), error) {
 	return ret, nil
 }
 
-// TODO
 func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) (func() ([]string, error), error) {
 	mqsocket, err := obj.ConnectMQ()
 	if err != nil {
@@ -261,8 +259,7 @@ func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) 
 	}
 
 	// packing
-	msg, err := client.NewMarshaledCallParameter("ExtractLinksFromURL", wrapperspb.String(key))
-	msg, err := services.NewMarshaledCallParameter("ExtractLinksFromURL", &service.ExtractLinksFromURLParameters{Url: url, Depth: depth})
+	msg, err := client.NewMarshaledCallParameter("ExtractLinksFromURL", &service.ExtractLinksFromURLParameters{Url: url, Depth: depth})
 	if err != nil {
 		return nil, fmt.Errorf("ExtractLinksFromURLAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}

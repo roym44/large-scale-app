@@ -87,27 +87,7 @@ func messageHandler(method string, parameters []byte) (response proto.Message, e
 		}
 		return res, nil
 	case "WaitAndRand":
-		p := &wrapperspb.Int32Value{}
-		err := proto.Unmarshal(parameters, p)
-		if err != nil {
-			return nil, err
-		}
-
-		var receivedMessages []int32
-
-		// Define a mock stream that collects responses
-		mockStream := &mockWaitAndRandServer{
-			sendFunc: func(msg *wrapperspb.Int32Value) error {
-				receivedMessages = append(receivedMessages, msg.Value)
-				return nil
-			},
-		}
-
-		err = serviceInstance.WaitAndRand(p, mockStream)
-		if err != nil {
-			return nil, err
-		}
-		return nil, nil
+		return nil, fmt.Errorf("WaitAndRand is unsupported")
 	case "IsAlive":
 		p := emptypb.Empty{}
 		res, err := serviceInstance.IsAlive(context.Background(), &p)

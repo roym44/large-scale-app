@@ -20,7 +20,7 @@ type ServiceClientBase[client_t any] struct {
 
 func (obj *ServiceClientBase[client_t]) getMQNodes() ([]string, error) {
 	regClient := RegServiceClient.NewRegServiceClient(obj.RegistryAddresses)
-	nodes, err := regClient.Discover(obj.ServiceName+"MQ")
+	nodes, err := regClient.Discover(obj.ServiceName + "MQ")
 	if err != nil {
 		Logger.Printf("Error calling Discover: %s", err)
 	}
@@ -39,7 +39,8 @@ func (obj *ServiceClientBase[client_t]) ConnectMQ() (socket *zmq4.Socket, err er
 		Logger.Fatalf("Failed to create a new zmq socket: %v", err)
 	}
 	for _, node := range nodes {
-		Logger.Printf("ConnectMQ(): calling Connect on nodes %s", node)
+		Logger.Printf("ConnectMQ(): calling Connect on node %s", node)
+		// TODO: consider adding timeout?
 		err = socket.Connect(node)
 		if err != nil {
 			Logger.Printf("Failed to connect a zmq socket: %v", err)

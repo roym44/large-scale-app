@@ -33,7 +33,6 @@ func (m *mockWaitAndRandServer) Send(msg *wrapperspb.Int32Value) error {
 var serviceInstance *testServiceImplementation
 
 func messageHandler(method string, parameters []byte) (response proto.Message, err error) {
-	// TODO: support more methods
 	Logger.Printf("messageHandler(): entered with %s and %v", method, parameters)
 	switch method {
 	case "ExtractLinksFromURL":
@@ -58,7 +57,7 @@ func messageHandler(method string, parameters []byte) (response proto.Message, e
 			return nil, err
 		}
 		return res, nil
-	case "Set":
+	case "Store":
 		p := &StoreKeyValue{}
 		err := proto.Unmarshal(parameters, p)
 		if err != nil {
@@ -70,7 +69,6 @@ func messageHandler(method string, parameters []byte) (response proto.Message, e
 		}
 		return res, nil
 	case "HelloWorld":
-		Logger.Printf("messageHandler(): HelloWorld")
 		p := emptypb.Empty{}
 		res, err := serviceInstance.HelloWorld(context.Background(), &p)
 		if err != nil {
@@ -110,6 +108,13 @@ func messageHandler(method string, parameters []byte) (response proto.Message, e
 			return nil, err
 		}
 		return nil, nil
+	case "IsAlive":
+		p := emptypb.Empty{}
+		res, err := serviceInstance.IsAlive(context.Background(), &p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	default:
 		return nil, fmt.Errorf("MQ message called unknown method: %v", method)
 	}

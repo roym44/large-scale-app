@@ -16,13 +16,13 @@ run_service () {
 main () {
     # ------------------------ RegService ------------------------
     echo "Starting registry services..."
-    run_service "reg-service/service/RegServiceRoot.yaml" "RegService1(root)"
+    run_service "reg-service/service/RegServiceRoot.yaml" "RegService1_root"
     run_service "reg-service/service/AnotherRegService.yaml" "RegService2"
     run_service "reg-service/service/AnotherRegService.yaml" "RegService3"
 
     # ------------------------ CacheService ------------------------
     echo "Starting cache services..."
-    run_service "cache-service/service/CacheServiceRoot.yaml" "CacheService1(root)"
+    run_service "cache-service/service/CacheServiceRoot.yaml" "CacheService1_root"
     run_service "cache-service/service/AnotherCacheService.yaml" "CacheService2"
     run_service "cache-service/service/AnotherCacheService.yaml" "CacheService3"
 
@@ -34,5 +34,6 @@ main () {
 }
 
 main
+echo "Done!"
 
 # ps -a -o pid= | xargs kill

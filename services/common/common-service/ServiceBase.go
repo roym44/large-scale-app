@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"github.com/pebbe/zmq4"
@@ -57,7 +58,7 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 			go func() {
 				Logger.Printf("startMQ func(): unpacking")
 				// unpacking
-				callParams := &CallParameters{}
+				callParams := &common.CallParameters{}
 				err := proto.Unmarshal(data, callParams)
 				if err != nil {
 					Logger.Printf("Unmarshal failed: %v\n", err)
@@ -70,7 +71,7 @@ func bindMQToService(listenPort int, messageHandler func(method string,
 
 				// packing
 				Logger.Printf("startMQ func(): got response")
-				returnValue := &ReturnValue{}
+				returnValue := &common.ReturnValue{}
 				if err != nil {
 					Logger.Printf("messageHandler failed with: %v\n", err)
 					returnValue.Error = err.Error() // get the string for the error

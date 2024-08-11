@@ -5,18 +5,18 @@ import (
 	"fmt"
 
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	client "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-client"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type CacheServiceClient struct {
-	services.ServiceClientBase[service.CacheServiceClient]
+	client.ServiceClientBase[service.CacheServiceClient]
 }
 
 func NewCacheServiceClient(addresses []string, service_name string) *CacheServiceClient {
 	return &CacheServiceClient{
-		ServiceClientBase: services.ServiceClientBase[service.CacheServiceClient]{
+		ServiceClientBase: client.ServiceClientBase[service.CacheServiceClient]{
 			RegistryAddresses: addresses,
 			ServiceName:       service_name,
 			CreateClient:      service.NewCacheServiceClient},

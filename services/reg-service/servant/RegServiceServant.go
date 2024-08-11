@@ -28,6 +28,7 @@ type NodeStatus struct {
 	Alive     bool
 }
 
+
 func encodeStrings(lst []string) string {
 	return strings.Join(lst, ",")
 }
@@ -192,9 +193,11 @@ func Discover(service_name string) ([]string, error) {
 	return lst, nil
 }
 
-// TestServiceClient code (we duplicate some code for the IsAlive grpc connection)
+// TestServiceClient code (we duplicate some code for the IsAlive grpc/mq connections)
 type TestServiceClient struct {
-	Address      string // we have a specified address, not using the registry
+	// we have a specified address, not using the registry
+	AddressGRPC     string 
+	AddressMQ		string
 	CreateClient func(grpc.ClientConnInterface) testservicecommon.TestServiceClient
 }
 
@@ -203,9 +206,10 @@ type CacheServiceClient struct {
 	CreateClient func(grpc.ClientConnInterface) cacheservicecommon.CacheServiceClient
 }
 
-func NewTestServiceClient(address string) *TestServiceClient {
+func NewTestServiceClient(address_grpc string, address_mq string) *TestServiceClient {
 	return &TestServiceClient{
-		Address:      address,
+		AddressGRPC:  address_grpc,
+		AddressMQ:    address_mq,
 		CreateClient: testservicecommon.NewTestServiceClient,
 	}
 }
@@ -222,10 +226,10 @@ func (obj *TestServiceClient) Connect() (res testservicecommon.TestServiceClient
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, obj.Address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, obj.AddressGRPC, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		var empty testservicecommon.TestServiceClient
-		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.Address, err)
+		return empty, nil, fmt.Errorf("failed to connect client to %v: %v", obj.AddressGRPC, err)
 	}
 	c := obj.CreateClient(conn)
 	return c, func() { conn.Close() }, nil
@@ -273,6 +277,7 @@ func (obj *CacheServiceClient) IsAlive() (bool, error) {
 	return r.Value, nil
 }
 
+
 // Internal logic, health checking the nodes
 func IsAliveCheck() {
 	ticker := time.NewTicker(10 * time.Second)
@@ -300,11 +305,17 @@ func IsAliveCheck() {
 				var alive bool
 				var err error
 				switch serviceName {
-				case "TestService":
-					c := NewTestServiceClient(address)
+				case "TestService": // grpc
+					c := NewTestServiceClient(address, "")
 					alive, err = c.IsAlive()
-				//This means that MQ service will never be unregister
-				case "TestServiceMQ":
+				case "TestServiceMQ": // mq
+					// c := NewTestServiceClient("", address)
+					// r, err := c.IsAliveAsync()
+					// if err != nil {
+					// 	utils.Logger.Printf("could not call IsAliveAsync: %v", err)
+					// 	continue
+					// }
+					// alive, err = r()
 					alive = true
 				case "CacheService":
 					c := NewCacheServiceClient(address)

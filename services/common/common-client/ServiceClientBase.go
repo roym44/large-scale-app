@@ -3,9 +3,9 @@ package common
 import (
 	"fmt"
 	"math/rand"
-
 	"github.com/pebbe/zmq4"
 
+	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
@@ -93,7 +93,7 @@ func NewMarshaledCallParameter(method string, proto_data proto.Message) ([]byte,
 	}
 
 	// handle call params
-	callParams := &CallParameters{Method: method, Data: data}
+	callParams := &common.CallParameters{Method: method, Data: data}
 	msg, err = proto.Marshal(callParams)
 	if err != nil {
 		Logger.Printf("NewMarshaledCallParameter(): Marshal(callParams) failed: %v\n", err)

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
+	client "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-client"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 
 	"google.golang.org/protobuf/proto"
@@ -20,7 +22,7 @@ func (obj *TestServiceClient) HelloWorldAsync() (func() (string, error), error) 
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("HelloWorld", &emptypb.Empty{})
+	msg, err := client.NewMarshaledCallParameter("HelloWorld", &emptypb.Empty{})
 	if err != nil {
 		return nil, fmt.Errorf("HelloWorldAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -38,7 +40,7 @@ func (obj *TestServiceClient) HelloWorldAsync() (func() (string, error), error) 
 			return "", fmt.Errorf("HelloWorldAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
@@ -69,7 +71,7 @@ func (obj *TestServiceClient) HelloToUserAsync(userName string) (func() (string,
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("HelloToUser", wrapperspb.String(userName))
+	msg, err := client.NewMarshaledCallParameter("HelloToUser", wrapperspb.String(userName))
 	if err != nil {
 		return nil, fmt.Errorf("HelloToUserAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -87,7 +89,7 @@ func (obj *TestServiceClient) HelloToUserAsync(userName string) (func() (string,
 			return "", fmt.Errorf("HelloToUserAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
@@ -118,7 +120,7 @@ func (obj *TestServiceClient) StoreAsync(key string, value string) (func() error
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("Store", &service.StoreKeyValue{Key: key, Value: value})
+	msg, err := client.NewMarshaledCallParameter("Store", &service.StoreKeyValue{Key: key, Value: value})
 	if err != nil {
 		return nil, fmt.Errorf("StoreAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -160,7 +162,7 @@ func (obj *TestServiceClient) GetAsync(key string) (func() (string, error), erro
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("Get", wrapperspb.String(key))
+	msg, err := client.NewMarshaledCallParameter("Get", wrapperspb.String(key))
 	if err != nil {
 		return nil, fmt.Errorf("GetAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -178,7 +180,7 @@ func (obj *TestServiceClient) GetAsync(key string) (func() (string, error), erro
 			return "", fmt.Errorf("GetAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
@@ -209,7 +211,7 @@ func (obj *TestServiceClient) IsAliveAsync() (func() (bool, error), error) {
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("IsAlive", &emptypb.Empty{})
+	msg, err := client.NewMarshaledCallParameter("IsAlive", &emptypb.Empty{})
 	if err != nil {
 		return nil, fmt.Errorf("IsAliveAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -227,7 +229,7 @@ func (obj *TestServiceClient) IsAliveAsync() (func() (bool, error), error) {
 			return false, fmt.Errorf("IsAliveAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
@@ -258,7 +260,7 @@ func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) 
 	}
 
 	// packing
-	msg, err := services.NewMarshaledCallParameter("ExtractLinksFromURL", wrapperspb.String(key))
+	msg, err := client.NewMarshaledCallParameter("ExtractLinksFromURL", wrapperspb.String(key))
 	if err != nil {
 		return nil, fmt.Errorf("ExtractLinksFromURLAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -276,7 +278,7 @@ func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) 
 			return "", fmt.Errorf("ExtractLinksFromURLAsync(): RecvBytes failed: %v\n", err)
 		}
 
-		returnValue := &services.ReturnValue{}
+		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {

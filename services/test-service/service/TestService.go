@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *

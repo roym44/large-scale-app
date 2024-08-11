@@ -4,19 +4,19 @@ import (
 	context "context"
 	"fmt"
 
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	client "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-client"
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type TestServiceClient struct {
-	services.ServiceClientBase[service.TestServiceClient]
+	client.ServiceClientBase[service.TestServiceClient]
 }
 
 func NewTestServiceClient(addresses []string, service_name string) *TestServiceClient {
 	return &TestServiceClient{
-		ServiceClientBase: services.ServiceClientBase[service.TestServiceClient]{
+		ServiceClientBase: client.ServiceClientBase[service.TestServiceClient]{
 			RegistryAddresses: addresses,
 			ServiceName:       service_name,
 			CreateClient:      service.NewTestServiceClient},

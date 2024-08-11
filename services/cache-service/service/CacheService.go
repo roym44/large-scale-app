@@ -7,7 +7,7 @@ import (
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	CacheServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/servant"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 
 	"google.golang.org/grpc"

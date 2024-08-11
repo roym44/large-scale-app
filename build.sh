@@ -25,4 +25,4 @@ build () {
 # fix_openjdk
 # get_dependencies
 build
-echo "Done!"
+echo "Done"

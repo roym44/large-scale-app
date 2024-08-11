@@ -253,6 +253,7 @@ func (obj *TestServiceClient) IsAliveAsync() (func() (bool, error), error) {
 	return ret, nil
 }
 
+// TODO
 func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) (func() ([]string, error), error) {
 	mqsocket, err := obj.ConnectMQ()
 	if err != nil {
@@ -261,6 +262,7 @@ func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) 
 
 	// packing
 	msg, err := client.NewMarshaledCallParameter("ExtractLinksFromURL", wrapperspb.String(key))
+	msg, err := services.NewMarshaledCallParameter("ExtractLinksFromURL", &service.ExtractLinksFromURLParameters{Url: url, Depth: depth})
 	if err != nil {
 		return nil, fmt.Errorf("ExtractLinksFromURLAsync(): NewMarshaledCallParameter failed: %v\n", err)
 	}
@@ -271,32 +273,34 @@ func (obj *TestServiceClient) ExtractLinksFromURLAsync(url string, depth int32) 
 	}
 
 	// return function (future pattern)
-	ret := func() (string, error) {
+	ret := func() ([]string, error) {
+		var links []string
 		defer mqsocket.Close()
 		rv, err := mqsocket.RecvBytes(0)
 		if err != nil {
-			return "", fmt.Errorf("ExtractLinksFromURLAsync(): RecvBytes failed: %v\n", err)
+			return links, fmt.Errorf("ExtractLinksFromURLAsync(): RecvBytes failed: %v\n", err)
 		}
 
 		returnValue := &common.ReturnValue{}
 		// handle return value
 		err = proto.Unmarshal(rv, returnValue)
 		if err != nil {
-			return "", fmt.Errorf("ExtractLinksFromURLAsync(): Unmarshal(rv) failed: %v\n", err)
+			return links, fmt.Errorf("ExtractLinksFromURLAsync(): Unmarshal(rv) failed: %v\n", err)
 		}
 
 		// handle data
-		value := &wrapperspb.StringValue{}
+		value := &service.ExtractLinksFromURLReturnedValue{}
 		err = proto.Unmarshal(returnValue.Data, value)
 		if err != nil {
-			return "", fmt.Errorf("ExtractLinksFromURLAsync(): Unmarshal(returnValue.Data) failed: %v\n", err)
+			return links, fmt.Errorf("ExtractLinksFromURLAsync(): Unmarshal(returnValue.Data) failed: %v\n", err)
 		}
+		links = value.Links
 
 		// error
 		if returnValue.Error != "" {
 			err = errors.New(returnValue.Error)
 		}
-		return value.Value, err
+		return links, err
 	}
 
 	return ret, nil

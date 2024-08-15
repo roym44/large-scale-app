@@ -1,7 +1,9 @@
 #!/bin/bash
+ROOT_DIR=/workspaces/RLAD
+
 fix_openjdk () {
     echo "fixing openjdk..."
-    cp /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so
+    cp $ROOT_DIR/utils/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so
     chmod 777 /usr/local/metaffi/xllr.openjdk.so
 }
 
@@ -18,11 +20,12 @@ get_dependencies () {
 build () {
     echo "building..."
     # -buildvcs=false is used to supress weird git error   
-    go build -o /workspaces/RLAD/output/large-scale-workshop -buildvcs=false
-    mkdir -p /workspaces/RLAD/output/logs
+    go build -o $ROOT_DIR/output/large-scale-workshop -buildvcs=false
+    mkdir -p $ROOT_DIR/output/logs
 }
 
-# fix_openjdk
-# get_dependencies
+fix_openjdk
+get_dependencies
 build
-echo "Done"
+
+echo "FINISHED BUILD"

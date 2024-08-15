@@ -15,7 +15,7 @@ var conf config.TestConfig
 // TestMain is the entry point for testing
 func TestMain(m *testing.M) {
 	// Load the configuration
-	configFile := "../service/CacheService.yaml"
+	configFile := "../service/CacheServiceRoot.yaml"
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatalf("error reading file: %v", err)
@@ -51,7 +51,7 @@ func TestSetGetAndDelete(t *testing.T) {
 		t.Fatalf("could not call Set: %v", err)
 		return
 	}
-	r, err = c.Get("key1")
+	r, err := c.Get("key1")
 	if err != nil {
 		t.Fatalf("could not call Get: %v", err)
 		return
@@ -70,8 +70,8 @@ func TestSetGetAndDelete(t *testing.T) {
 		t.Fatalf("could not call Get: %v", err)
 		return
 	}
-	if r != nil {
-		t.Fatalf("wrong value: received %s, expected nil", r)
+	if r != "" {
+		t.Fatalf("wrong value: received %s, expected '' ", r)
 		return
 	}
 	t.Logf("Response: %v", r)

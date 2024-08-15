@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"math/rand"
+
 	"github.com/pebbe/zmq4"
 
 	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
@@ -22,7 +23,7 @@ func (obj *ServiceClientBase[client_t]) getMQNodes() ([]string, error) {
 	regClient := RegServiceClient.NewRegServiceClient(obj.RegistryAddresses)
 	nodes, err := regClient.Discover(obj.ServiceName + "MQ")
 	if err != nil {
-		Logger.Printf("Error calling Discover: %s", err)
+		Logger.Printf("getMQNodes(): Error calling Discover: %s", err)
 	}
 	return nodes, err
 }
@@ -34,7 +35,6 @@ func (obj *ServiceClientBase[client_t]) ConnectMQ() (socket *zmq4.Socket, err er
 		Logger.Printf("Error calling getMQNodes: %s", err)
 	}
 	socket, err = zmq4.NewSocket(zmq4.REQ)
-	Logger.Printf("ConnectMQ(): created NewSocket %v", socket)
 	if err != nil {
 		Logger.Fatalf("Failed to create a new zmq socket: %v", err)
 	}
@@ -51,11 +51,8 @@ func (obj *ServiceClientBase[client_t]) ConnectMQ() (socket *zmq4.Socket, err er
 
 // randomly picks a service node address to connect to
 func (obj *ServiceClientBase[client_t]) pickNode() string {
-	Logger.Printf("Start pickNode")
 	regClient := RegServiceClient.NewRegServiceClient(obj.RegistryAddresses)
-	Logger.Printf("Before Discover with %s", obj.ServiceName)
 	nodes, err := regClient.Discover(obj.ServiceName)
-	Logger.Printf("After Discover with %s", obj.ServiceName)
 	if err != nil || len(nodes) == 0 {
 		return ""
 	}
@@ -65,13 +62,12 @@ func (obj *ServiceClientBase[client_t]) pickNode() string {
 
 func (obj *ServiceClientBase[client_t]) Connect() (res client_t, closeFunc func(), err error) {
 	// pick some node of the service
-	Logger.Printf("Connect(): started connect function")
 	node_address := obj.pickNode()
 	if node_address == "" {
 		var empty client_t
 		return empty, nil, fmt.Errorf("no available nodes found")
 	}
-	Logger.Printf("Got node address %s", node_address)
+	Logger.Printf("Connect(): Got node address %s", node_address)
 
 	// connect
 	conn, err := grpc.Dial(node_address, grpc.WithInsecure(), grpc.WithBlock())

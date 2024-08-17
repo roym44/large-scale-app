@@ -18,9 +18,6 @@ get_dependencies () {
     echo "getting dependencies..."
     sudo apt-get update && sudo apt-get install -y python3.11-dev
     python3.11 -m pip install beautifulsoup4 requests
-
-    #go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-    #go mod tidy
     go get
 }
 

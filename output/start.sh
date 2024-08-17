@@ -44,5 +44,3 @@ main () {
 
 main
 echo "APP READY"
-
-# 

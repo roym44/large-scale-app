@@ -1,81 +1,45 @@
-# RLAD
+# Large Scale Workshop
 
-Large Scale Workshop
+This project displays a basic distributed, service-oriented system including the following concepts: Remote Procedure Call, Service Discovery, Distributed cache and Message Queue.
 
-## General Notes
-- the image mounts the large-scale-workshop directory into: `/workspaces/<cloned-repo-name>/`
-- some necessary dependencies for python 3.11 are not included in the base docker image, see extra installations.
-- our "module name" is `github.com/TAULargeScaleWorkshop/RLAD`
+The system has three services:
+- Registry Service - service discovery.
+- Cache Service - in-memory cache using Chord Distributed Hash Table.
+- Test Service - some basic functionalities.
 
-### Extra installations
-```
-sudo apt-get update && sudo apt-get install -y python3.11-dev
-python3.11 -m pip install beautifulsoup4 requests
-go get github.com/MetaFFI/lang-plugin-go@v0.1.2
-go mod tidy
-```
+Each new service node that starts in the system registers itself using the Registry service (e.g. Test and Cache services). The Registry service's root node (the first node to start) peforms an "IsAlive" check (every 10 seconds) on each node in the systems, and if it fails to answer within 3 retries - we unregister it from the system.
 
-## Section 1 - running main.go
-```
-go get
-go build -o ./output/large-scale-workshop
-./output/large-scale-workshop ./services/test-service/service/TestService.yaml
-```
+Both Registry and Cache services use the Chord structure to store their data. The communication between the services in the system is performed using gRPC, and while the Test service specifically supports an async Message Queue (ZeroMQ).
 
-## Section 2 - running the test
-```
-cd /workspaces/RLAD/interop/
-go clean -testcache
-go test -v -tags=interop
-```
 
-## Section 3 - TestService
-First run: `/workspaces/RLAD/utils/testservice_proto.sh`\
-Build server: `/workspaces/RLAD/build.sh`\
-Run the server:
-```
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
-```
-Test the client:
-```
-cd /workspaces/RLAD/services/test-service/client/
-go test -v
-```
+## Getting started
 
-## Section 4
-### Cluster & Registry
-First run: `/workspaces/RLAD/utils/regservice_proto.sh`\
-Build: `/workspaces/RLAD/build.sh`\
-We have three components now that should run in separate terminals:
-1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`\
-Unit testing for RegService:
-```
-cd /workspaces/RLAD/services/reg-service/client/
-go test -v
-```
-2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`\
-3. TestServiceClient:
-```
-cd /workspaces/RLAD/services/test-service/client/
-go test -v
-```
+### Prerequisits
+This project was developed using “Visual Studio Code Dev-Container”, so you'll need VSCode, Docker, and the Dev Container extension.
 
-### Cluster Registry Service & Cache Service
-Chord DHT fixes:
-- replace `Chord.class`
-- `mv /workspaces/RLAD/files/xllr.openjdk.so /usr/local/metaffi/xllr.openjdk.so`
-- `chmod 777 /usr/local/metaffi/xllr.openjdk.so`
-We have the Chord DHT test:
-```
-cd /workspaces/RLAD/services/reg-service/servant/dht
-go test -v
-```
-We have three components now that should run in separate terminals:
-1. RegService: `/workspaces/RLAD/utils/run_reg_service.sh`
-2. TestService: `/workspaces/RLAD/utils/run_test_service.sh`
-3. CacheService: `/workspaces/RLAD/utils/run_cache_service.sh`
-4. TestServiceClient:
-```
-cd /workspaces/RLAD/services/test-service/client/
-go test -v
-```
+### Opening the project
+First clone using:\
+```git clone git@github.com:TAULargeScaleWorkshop/RLAD.git ./large-scale-workshop```
+
+Then, use `file -> open workspace from file...` to open the workspace file, and then `reopen in container`.
+
+The image mounts the large-scale-workshop directory into: `/workspaces/<cloned-repo-name>/`
+
+## Usage
+
+### Building
+In the root directory run `./build.sh` to install required dependencies and build the app to `./output`.
+
+### Running
+Run the app using `./output/start.sh` to start 3 services of each type: Registry, Cache and Test. 
+
+When all the services are ready the message: `"APP READY"` will be printed. After the system is up:
+- Logs can be found in `./output/logs`
+- All instances can be easily killed using `ps -ao pid= | xargs kill`.
+
+### Testing
+Each module has its UT, simply go to the test directory and run: `go test -v`. The directories include a client-side testing of each service among other modules:
+- TestService: `/workspaces/RLAD/services/test-service/client/`
+- CacheService: `/workspaces/RLAD/services/cache-service/client/`
+- RegService: `/workspaces/RLAD/services/reg-service/client/`
+- Chord DHT: `/workspaces/RLAD/services/reg-service/servant/dht`

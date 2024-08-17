@@ -1,17 +1,40 @@
-# RegService
-#echo Starting first RegService
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/reg-service/service/RegServiceRoot.yaml
-#sleep 1
+#!/bin/bash
+ROOT_DIR=/workspaces/RLAD
+LSA_TARGET=$ROOT_DIR/output/large-scale-workshop
+SERVICES_DIR=$ROOT_DIR/services
+LOGS_DIR=$ROOT_DIR/output/logs
+SLEEP_NUMBER=8
 
-#echo Starting second
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/reg-service/service/AnotherRegService.yaml
+# Parameters:
+#   $1 - the service configuration (yaml) under services dir
+#   $2 - the desired node name
+run_service () {
+    $LSA_TARGET $SERVICES_DIR/$1 > $LOGS_DIR/$2.log 2>&1 &
+    echo "$2 started with PID $!"
+    sleep $SLEEP_NUMBER
+}
 
+main () {
+    # ------------------------ RegService ------------------------
+    echo "Starting registry services..."
+    run_service "reg-service/service/RegServiceRoot.yaml" "RegService1_root"
+    run_service "reg-service/service/AnotherRegService.yaml" "RegService2"
+    run_service "reg-service/service/AnotherRegService.yaml" "RegService3"
 
-# CacheService
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/cache-service/service/CacheServiceRoot.yaml
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/cache-service/service/AnotherCacheService.yaml
+    # ------------------------ CacheService ------------------------
+    echo "Starting cache services..."
+    run_service "cache-service/service/CacheServiceRoot.yaml" "CacheService1_root"
+    run_service "cache-service/service/AnotherCacheService.yaml" "CacheService2"
+    run_service "cache-service/service/AnotherCacheService.yaml" "CacheService3"
 
-# TestService
-/workspaces/RLAD/output/large-scale-workshop /workspaces/RLAD/services/test-service/service/TestService.yaml
+    # ------------------------ TestService ------------------------
+    echo "Starting test services..."
+    run_service "test-service/service/TestService.yaml" "TestService1"
+    run_service "test-service/service/TestService.yaml" "TestService2"
+    run_service "test-service/service/TestService.yaml" "TestService3"
+}
 
-# ...
+main
+echo "APP READY"
+
+# 

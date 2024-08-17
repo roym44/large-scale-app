@@ -7,7 +7,7 @@ import (
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
 	CacheServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/servant"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 
 	"google.golang.org/grpc"
@@ -43,7 +43,7 @@ func Start(configData []byte) error {
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
 		RegisterCacheServiceServer(s, &cacheServiceImplementation{})
 	}
-	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
+	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService, nil) // randomly pick a port
 
 	return nil
 }

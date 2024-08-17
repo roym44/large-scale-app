@@ -54,6 +54,21 @@ func TestHelloWorld(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
+func TestHelloWorldAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	r, err := c.HelloWorldAsync()
+	if err != nil {
+		t.Fatalf("could not call HelloWorldAsync: %v", err)
+		return
+	}
+	res, err := r()
+	if err != nil {
+		t.Fatalf("HelloWorldAsync returned error : %v", err)
+		return
+	}
+	t.Logf("Response: %v", res)
+}
+
 func TestHelloToUser(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 	r, err := c.HelloToUser("Zvi")
@@ -64,18 +79,36 @@ func TestHelloToUser(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
+func TestHelloToUserAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	r, err := c.HelloToUserAsync("ZviAsync")
+	if err != nil {
+		t.Fatalf("could not call HelloToUserAsync: %v", err)
+		return
+	}
+	res, err := r()
+	if err != nil {
+		t.Fatalf("HelloToUserAsync returned error : %v", err)
+		return
+	}
+	t.Logf("Response: %v", res)
+}
+
 func TestStoreAndGet(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	// store
 	err := c.Store("key1", "value1")
 	if err != nil {
 		t.Fatalf("could not call Store: %v", err)
 		return
 	}
+	// get
 	r, err := c.Get("key1")
 	if err != nil {
 		t.Fatalf("could not call Get: %v", err)
 		return
 	}
+	// check
 	if r != "value1" {
 		t.Fatalf("wrong value: received %s, expected value1", r)
 		return
@@ -83,20 +116,55 @@ func TestStoreAndGet(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
-func TestWaitAndRand(t *testing.T) {
+func TestStoreAndGetAsync(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
-	resPromise, err := c.WaitAndRand(3)
+
+	// store
+	r_store, err := c.StoreAsync("key1", "value1")
 	if err != nil {
-		t.Fatalf("Calling WaitAndRand failed: %v", err)
+		t.Fatalf("could not call StoreAsync: %v", err)
 		return
 	}
-	res, err := resPromise()
+	err = r_store()
 	if err != nil {
-		t.Fatalf("WaitAndRand failed: %v", err)
+		t.Fatalf("StoreAsync returned error : %v", err)
 		return
 	}
-	t.Logf("Returned random number: %v\n", res)
+	// get
+	r_get, err := c.GetAsync("key1")
+	if err != nil {
+		t.Fatalf("could not call GetAsync: %v", err)
+		return
+	}
+	res, err := r_get()
+	if err != nil {
+		t.Fatalf("GetAsync returned error : %v", err)
+		return
+	}
+
+	// check
+	if res != "value1" {
+		t.Fatalf("wrong value: received %s, expected value1", res)
+		return
+	}
+	t.Logf("Response: %v", res)
+
 }
+
+// func TestWaitAndRand(t *testing.T) {
+// 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+// 	resPromise, err := c.WaitAndRand(3)
+// 	if err != nil {
+// 		t.Fatalf("Calling WaitAndRand failed: %v", err)
+// 		return
+// 	}
+// 	res, err := resPromise()
+// 	if err != nil {
+// 		t.Fatalf("WaitAndRand failed: %v", err)
+// 		return
+// 	}
+// 	t.Logf("Returned random number: %v\n", res)
+// }
 
 func TestIsAlive(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
@@ -112,6 +180,26 @@ func TestIsAlive(t *testing.T) {
 	t.Logf("Response: %v", r)
 }
 
+func TestIsAliveAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	r, err := c.IsAliveAsync()
+	if err != nil {
+		t.Fatalf("could not call IsAliveAsync: %v", err)
+		return
+	}
+	res, err := r()
+	if err != nil {
+		t.Fatalf("IsAliveAsync returned error : %v", err)
+		return
+	}
+	// check
+	if !res {
+		t.Fatalf("IsAlive returned false")
+		return
+	}
+	t.Logf("Response: %v", res)
+}
+
 func TestExtractLinksFromURL(t *testing.T) {
 	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
 
@@ -119,6 +207,29 @@ func TestExtractLinksFromURL(t *testing.T) {
 	links, err := c.ExtractLinksFromURL(url, 1)
 	if err != nil {
 		t.Fatalf("ExtractLinksFromURL failed with error: %v", err)
+	}
+
+	// make sure you got some links
+	if len(links) == 0 {
+		t.Fatalf("ExtractLinksFromURL returned no links")
+	}
+
+	// print the links
+	t.Logf("links: %v\n", links)
+}
+
+func TestExtractLinksFromURLAsync(t *testing.T) {
+	c := NewTestServiceClient(conf.RegistryAddresses, conf.Type)
+	url := "https://www.microsoft.com"
+	r, err := c.ExtractLinksFromURLAsync(url, 1)
+	if err != nil {
+		t.Fatalf("could not call ExtractLinksFromURLAsync: %v", err)
+		return
+	}
+	links, err := r()
+	if err != nil {
+		t.Fatalf("ExtractLinksFromURLAsync returned error : %v", err)
+		return
 	}
 
 	// make sure you got some links

@@ -2,14 +2,16 @@ package TestService
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
-	services "github.com/TAULargeScaleWorkshop/RLAD/services/common"       // import common as services
+	services "github.com/TAULargeScaleWorkshop/RLAD/services/common/common-service"
 	. "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common" // from test-service/common import *
 	TestServiceServant "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/servant"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils" // from utils import *
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/yaml.v2"
@@ -17,6 +19,85 @@ import (
 
 type testServiceImplementation struct {
 	UnimplementedTestServiceServer
+}
+
+type mockWaitAndRandServer struct {
+	grpc.ServerStream
+	sendFunc func(msg *wrapperspb.Int32Value) error
+}
+
+func (m *mockWaitAndRandServer) Send(msg *wrapperspb.Int32Value) error {
+	return m.sendFunc(msg)
+}
+
+var serviceInstance *testServiceImplementation
+
+func messageHandler(method string, parameters []byte) (response proto.Message, err error) {
+	Logger.Printf("messageHandler(): entered with %s and %v", method, parameters)
+	switch method {
+	case "ExtractLinksFromURL":
+		p := &ExtractLinksFromURLParameters{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.ExtractLinksFromURL(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "Get":
+		p := &wrapperspb.StringValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.Get(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "Store":
+		p := &StoreKeyValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.Store(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "HelloWorld":
+		p := emptypb.Empty{}
+		res, err := serviceInstance.HelloWorld(context.Background(), &p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "HelloToUser":
+		p := &wrapperspb.StringValue{}
+		err := proto.Unmarshal(parameters, p)
+		if err != nil {
+			return nil, err
+		}
+		res, err := serviceInstance.HelloToUser(context.Background(), p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "WaitAndRand":
+		return nil, fmt.Errorf("WaitAndRand is unsupported")
+	case "IsAlive":
+		p := emptypb.Empty{}
+		res, err := serviceInstance.IsAlive(context.Background(), &p)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("MQ message called unknown method: %v", method)
+	}
 }
 
 func Start(configData []byte) error {
@@ -39,9 +120,9 @@ func Start(configData []byte) error {
 
 	// start service
 	bindgRPCToService := func(s grpc.ServiceRegistrar) {
-		RegisterTestServiceServer(s, &testServiceImplementation{})
+		RegisterTestServiceServer(s, serviceInstance)
 	}
-	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService) // randomly pick a port
+	services.Start(config.Type, 0, config.RegistryAddresses, bindgRPCToService, messageHandler) // randomly pick a port
 
 	return nil
 }

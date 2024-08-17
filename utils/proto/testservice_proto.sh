@@ -6,5 +6,5 @@ protoc -I=. \
        --go_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/test-service \
        --go-grpc_out=. \
        --go-grpc_opt=paths=source_relative \
-       --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/testservice/TestService.proto \
+       --go-grpc_opt=MTestService.proto=github.com/TAULargeScaleWorkshop/RLAD/services/test-service/TestService.proto \
        TestService.proto

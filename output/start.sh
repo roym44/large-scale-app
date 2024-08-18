@@ -4,7 +4,7 @@
 ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null)
 # Fallback to the current directory name if not inside a git repository
 if [ -z "$ROOT_DIR" ]; then
-  ROOT_DIR=$(basename "$PWD")
+  ROOT_DIR=$PWD
 fi
 echo "Root directory is set to: $ROOT_DIR"
 

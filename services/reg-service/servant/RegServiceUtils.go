@@ -36,7 +36,7 @@ func encodeStrings(lst []string) string {
 
 // decodes multiple protocols for the same node
 // "$GRPC$xxx$MQ$xxx" -> [("GRPC", "xxx"), ("MQ", "xxx")]
-func DecodeProtocols(enc string) NodeAddresses {
+func decodeProtocols(enc string) NodeAddresses {
 	lst := strings.Split(enc, "$")
 	node_addresses := NodeAddresses{}
 	// we skip i = 0 due to empty string after split

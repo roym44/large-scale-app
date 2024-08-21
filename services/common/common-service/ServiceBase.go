@@ -6,12 +6,14 @@ import (
 
 	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
-	RegServiceCommon "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"github.com/pebbe/zmq4"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
+
+// maps protocol to address (duplicate from RegServiceUtils to prevent dht copy)
+type NodeAddresses map[string]string
 
 func bindMQToService(listenPort int, messageHandler func(method string,
 	parameters []byte) (response proto.Message, err error)) (startMQ func(), listeningAddress string) {
@@ -131,25 +133,23 @@ func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgR
 	bindgRPCToService(grpcServer)
 
 	// create a list of full addresses
-	full_addresses := []*RegServiceCommon.FullAddress{}
+	node_addresses := map[string]string{}
 
 	// first, add the GRPC
-	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: listeningAddress}
-	full_addresses = append(full_addresses, &grpc_full_address)
+	node_addresses["GRPC"] = listeningAddress
 
 	// mq
 	if messageHandler != nil {
 		start_mq, listening_address_mq := bindMQToService(0, messageHandler)
 
 		// add MQ
-		mq_full_address := RegServiceCommon.FullAddress{Protocol: "MQ", Address: listening_address_mq}
-		full_addresses = append(full_addresses, &mq_full_address)
+		node_addresses["MQ"] = listening_address_mq
 
 		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceName, listening_address_mq)
 		go start_mq()
 	}
 
-	unregister := registerAddress(serviceName, regAddresses, full_addresses)
+	unregister := registerAddress(serviceName, regAddresses, node_addresses)
 	defer unregister()
 
 	Logger.Printf("GRPC: %s starts listening on %s\n", serviceName, listeningAddress)
@@ -157,13 +157,13 @@ func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgR
 	return nil
 }
 
-func registerAddress(serviceName string, regAddresses []string, full_addresses []*RegServiceCommon.FullAddress) (unregister func()) {
+func registerAddress(serviceName string, regAddresses []string, node_addresses map[string]string) (unregister func()) {
 	regClient := RegServiceClient.NewRegServiceClient(regAddresses)
-	err := regClient.Register(serviceName, full_addresses)
+	err := regClient.Register(serviceName, node_addresses)
 	if err != nil {
 		Logger.Fatalf("Failed to register to registry service: %v", err)
 	}
 	return func() {
-		regClient.Unregister(serviceName, full_addresses)
+		regClient.Unregister(serviceName, node_addresses)
 	}
 }

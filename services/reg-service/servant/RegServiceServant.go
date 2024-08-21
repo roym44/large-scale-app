@@ -210,7 +210,7 @@ func IsAliveCheck() {
 				utils.Logger.Printf("IsAliveCheck: Service = %s, Node = %v\n", serviceName, enc_address)
 
 				// decode the address with its protocol
-				node_addresses := DecodeProtocols(enc_address)
+				node_addresses := decodeProtocols(enc_address)
 
 				var alive bool
 				var err error
@@ -255,7 +255,7 @@ func IsAliveCheck() {
 					delete(cacheMap, addresses[i])
 
 					// unregister
-					unregisterFromChord(serviceName, DecodeProtocols(addresses[i]))
+					unregisterFromChord(serviceName, decodeProtocols(addresses[i]))
 				}
 			}
 		}

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	RegServiceCommon "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
+	servant "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant"
 
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	"gopkg.in/yaml.v2"
@@ -49,11 +49,10 @@ func TestMain(m *testing.M) {
 func TestRegisterUnregister(t *testing.T) {
 	c := NewRegServiceClient(conf.RegistryAddresses)
 
-	full_addresses := []*RegServiceCommon.FullAddress{}
-	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: "node1"}
-	full_addresses = append(full_addresses, &grpc_full_address)
+	node_addresses := servant.NodeAddresses{}
+	node_addresses["GRPC"] = "node1"
 
-	err := c.Register("test1", full_addresses)
+	err := c.Register("test1", node_addresses)
 	if err != nil {
 		t.Fatalf("could not call Register: %v", err)
 		return
@@ -67,7 +66,7 @@ func TestRegisterUnregister(t *testing.T) {
 		t.Fatalf("wrong value for discover after register: received %s, expected node1", nodes[0])
 		return
 	}
-	err = c.Unregister("test1", full_addresses)
+	err = c.Unregister("test1", node_addresses)
 	if err != nil {
 		t.Fatalf("could not call Unregister: %v", err)
 		return
@@ -85,11 +84,10 @@ func TestDifferentRegNodes(t *testing.T) {
 	first_node := []string{"127.0.0.1:8502"}
 	c := NewRegServiceClient(first_node)
 
-	full_addresses := []*RegServiceCommon.FullAddress{}
-	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: "node1"}
-	full_addresses = append(full_addresses, &grpc_full_address)
+	node_addresses := servant.NodeAddresses{}
+	node_addresses["GRPC"] = "node1"
 
-	err := c.Register("test1", full_addresses)
+	err := c.Register("test1", node_addresses)
 	if err != nil {
 		t.Fatalf("could not call Register: %v", err)
 		return

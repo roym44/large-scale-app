@@ -110,6 +110,17 @@ func (obj *TestServiceClient) ConnectMQ() (socket *zmq4.Socket, err error) {
 	if err != nil {
 		utils.Logger.Fatalf("Failed to create a new zmq socket: %v", err)
 	}
+	err = socket.SetSndtimeo(5 * time.Second)
+	if err != nil {
+		utils.Logger.Printf("Failed to set send timeout: %v", err)
+		return nil, err
+	}
+
+	err = socket.SetRcvtimeo(5 * time.Second)
+	if err != nil {
+		utils.Logger.Printf("Failed to set receive timeout: %v", err)
+		return nil, err
+	}
 	utils.Logger.Printf("ConnectMQ(): calling Connect for address: %s", obj.AddressMQ)
 	err = socket.Connect(obj.AddressMQ)
 	if err != nil {

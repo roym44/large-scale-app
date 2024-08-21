@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	service "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
+	servant "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -34,44 +35,62 @@ func NewRegServiceClient(addresses []string) *RegServiceClient {
 	}
 }
 
-func (obj *RegServiceClient) Register(service_name string, node_addr string) error {
+func (obj *RegServiceClient) Register(service_name string, addresses []*service.FullAddress) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
 		return fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
-	// Call the Store RPC function
-	_, err = c.Register(context.Background(), &service.UpdateRegistryParameters{ServiceName: service_name, NodeAddr: node_addr})
+
+	// Call the Register RPC function
+	_, err = c.Register(context.Background(), &service.UpdateRegistryParameters{
+		ServiceName: service_name, Addresses: addresses})
 	if err != nil {
 		return fmt.Errorf("could not call Register: %v", err)
 	}
 	return nil
 }
 
-func (obj *RegServiceClient) Unregister(service_name string, node_addr string) error {
+func (obj *RegServiceClient) Unregister(service_name string, addresses []*service.FullAddress) error {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
 		return fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
-	// Call the Store RPC function
-	_, err = c.Unregister(context.Background(), &service.UpdateRegistryParameters{ServiceName: service_name, NodeAddr: node_addr})
+
+	// Call the Unregister RPC function
+	_, err = c.Unregister(context.Background(), &service.UpdateRegistryParameters{
+		ServiceName: service_name, Addresses: addresses})
 	if err != nil {
 		return fmt.Errorf("could not call Unregister: %v", err)
 	}
 	return nil
 }
 
-func (obj *RegServiceClient) Discover(service_name string) ([]string, error) {
+func (obj *RegServiceClient) Discover(service_name string, protocol string) ([]string, error) {
 	c, closeFunc, err := obj.Connect()
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to registry server: %v", err)
 	}
 	defer closeFunc()
-	// Call the Store RPC function
+
+	// Call the Discover RPC function
 	discovered, err := c.Discover(context.Background(), wrapperspb.String(service_name))
 	if err != nil {
 		return nil, fmt.Errorf("could not call Discover: %v", err)
 	}
-	return discovered.Addresses, nil
+
+	// Return only the addresses for the given protocol
+	addresses := []string{}
+
+	for _, enc_address := range discovered.Addresses {
+		node_addresses := servant.DecodeProtocols(enc_address)
+		for key, value := range node_addresses {
+			if key == protocol {
+				addresses = append(addresses, value)
+			}
+		}
+	}
+
+	return addresses, nil
 }

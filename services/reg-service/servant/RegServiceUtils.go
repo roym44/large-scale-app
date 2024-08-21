@@ -2,21 +2,55 @@ package RegServiceServant
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/pebbe/zmq4"
-
 	cacheservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/cache-service/common"
-	"github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	testservicecommon "github.com/TAULargeScaleWorkshop/RLAD/services/test-service/common"
 	"github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
+
+// -------------------- Chord DHT encoding ---------------
+// maps protocol to address
+type NodeAddresses map[string]string
+
+// encodes multiple protocols for the same node
+// {"GRPC":"xxx", "MQ": "xxx"} -> "$GRPC$xxx$MQ$xxx"
+func encodeProtocols(node_addresses NodeAddresses) string {
+	enc_address := ""
+	for key, value := range node_addresses {
+		utils.Logger.Printf("")
+		enc_address += "$" + key + "$" + value
+	}
+	return enc_address
+}
+
+// encodes a list of strings to a single string
+// ["$GRPC$xxx$MQ$xxx", "$GRPC$yyy$MQ$yyy"] -> "$GRPC$xxx$MQ$xxx,$GRPC$yyy$MQ$yyy"
+func encodeStrings(lst []string) string {
+	return strings.Join(lst, ",")
+}
+
+// decodes multiple protocols for the same node
+// "$GRPC$xxx$MQ$xxx" -> [("GRPC", "xxx"), ("MQ", "xxx")]
+func DecodeProtocols(enc string) NodeAddresses {
+	lst := strings.Split(enc, "$")
+	node_addresses := NodeAddresses{}
+	// we skip i = 0 due to empty string after split
+	for i := 1; i < len(lst); i += 2 {
+		node_addresses[lst[i]] = lst[i+1]
+	}
+	return node_addresses
+}
+
+// decodes a single string of nodes to a list of strings
+// "$GRPC$xxx$MQ$xxx,$GRPC$yyy$MQ$yyy" -> ["$GRPC$xxx$MQ$xxx", "$GRPC$yyy$MQ$yyy"]
+func decodeStrings(enc string) []string {
+	return strings.Split(enc, ",")
+}
 
 // -------------------- TestService --------------------
 // TestServiceClient code (we duplicate some code for the IsAlive grpc/mq connections)
@@ -101,97 +135,4 @@ func (obj *CacheServiceClient) IsAlive() (bool, error) {
 		return false, fmt.Errorf("could not call IsAlive: %v", err)
 	}
 	return r.Value, nil
-}
-
-// -------------------- TestServiceMQ --------------------
-func (obj *TestServiceClient) ConnectMQ() (socket *zmq4.Socket, err error) {
-	socket, err = zmq4.NewSocket(zmq4.REQ)
-	utils.Logger.Printf("ConnectMQ(): created NewSocket %v", socket)
-	if err != nil {
-		utils.Logger.Fatalf("Failed to create a new zmq socket: %v", err)
-	}
-	err = socket.SetSndtimeo(5 * time.Second)
-	if err != nil {
-		utils.Logger.Printf("Failed to set send timeout: %v", err)
-		return nil, err
-	}
-
-	err = socket.SetRcvtimeo(5 * time.Second)
-	if err != nil {
-		utils.Logger.Printf("Failed to set receive timeout: %v", err)
-		return nil, err
-	}
-	utils.Logger.Printf("ConnectMQ(): calling Connect for address: %s", obj.AddressMQ)
-	err = socket.Connect(obj.AddressMQ)
-	if err != nil {
-		utils.Logger.Printf("Failed to connect a zmq socket: %v", err)
-	}
-	return socket, err
-}
-
-func (obj *TestServiceClient) NewMarshaledCallParameter(method string, proto_data proto.Message) ([]byte, error) {
-	var msg []byte
-
-	// handle data
-	data, err := proto.Marshal(proto_data)
-	if err != nil {
-		utils.Logger.Printf("NewMarshaledCallParameter(): Marshal(proto_data) failed: %v\n", err)
-	}
-
-	// handle call params
-	callParams := &common.CallParameters{Method: method, Data: data}
-	msg, err = proto.Marshal(callParams)
-	if err != nil {
-		utils.Logger.Printf("NewMarshaledCallParameter(): Marshal(callParams) failed: %v\n", err)
-	}
-	return msg, err
-}
-
-func (obj *TestServiceClient) IsAliveAsync() (func() (bool, error), error) {
-	mqsocket, err := obj.ConnectMQ()
-	if err != nil {
-		return nil, fmt.Errorf("IsAliveAsync(): ConnectMQ failed: %v\n", err)
-	}
-
-	// packing
-	msg, err := obj.NewMarshaledCallParameter("IsAlive", &emptypb.Empty{})
-	if err != nil {
-		return nil, fmt.Errorf("IsAliveAsync(): NewMarshaledCallParameter failed: %v\n", err)
-	}
-
-	_, err = mqsocket.SendBytes(msg, 0)
-	if err != nil {
-		return nil, fmt.Errorf("IsAliveAsync(): SendBytes failed: %v\n", err)
-	}
-
-	// return function (future pattern)
-	ret := func() (bool, error) {
-		defer mqsocket.Close()
-		rv, err := mqsocket.RecvBytes(0)
-		if err != nil {
-			return false, fmt.Errorf("IsAliveAsync(): RecvBytes failed: %v\n", err)
-		}
-
-		returnValue := &common.ReturnValue{}
-		// handle return value
-		err = proto.Unmarshal(rv, returnValue)
-		if err != nil {
-			return false, fmt.Errorf("IsAliveAsync(): Unmarshal(rv) failed: %v\n", err)
-		}
-
-		// handle data
-		r := &wrapperspb.BoolValue{}
-		err = proto.Unmarshal(returnValue.Data, r)
-		if err != nil {
-			return false, fmt.Errorf("IsAliveAsync(): Unmarshal(returnValue.Data) failed: %v\n", err)
-		}
-
-		// error
-		if returnValue.Error != "" {
-			err = errors.New(returnValue.Error)
-		}
-		return r.Value, err
-	}
-
-	return ret, nil
 }

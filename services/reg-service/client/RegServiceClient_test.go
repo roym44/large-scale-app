@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	RegServiceCommon "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
+
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	"gopkg.in/yaml.v2"
 )
@@ -46,12 +48,17 @@ func TestMain(m *testing.M) {
 
 func TestRegisterUnregister(t *testing.T) {
 	c := NewRegServiceClient(conf.RegistryAddresses)
-	err := c.Register("test1", "node1")
+
+	full_addresses := []*RegServiceCommon.FullAddress{}
+	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: "node1"}
+	full_addresses = append(full_addresses, &grpc_full_address)
+
+	err := c.Register("test1", full_addresses)
 	if err != nil {
 		t.Fatalf("could not call Register: %v", err)
 		return
 	}
-	nodes, err := c.Discover("test1")
+	nodes, err := c.Discover("test1", "GRPC")
 	if err != nil {
 		t.Fatalf("could not call Discover: %v", err)
 		return
@@ -60,13 +67,13 @@ func TestRegisterUnregister(t *testing.T) {
 		t.Fatalf("wrong value for discover after register: received %s, expected node1", nodes[0])
 		return
 	}
-	err = c.Unregister("test1", "node1")
+	err = c.Unregister("test1", full_addresses)
 	if err != nil {
 		t.Fatalf("could not call Unregister: %v", err)
 		return
 	}
 	// we expect nodes to be nil
-	nodes, _ = c.Discover("test1")
+	nodes, _ = c.Discover("test1", "GRPC")
 	if len(nodes) != 0 {
 		t.Fatalf("wrong value for discover after register: expected no addresses for this service")
 		return
@@ -77,7 +84,12 @@ func TestRegisterUnregister(t *testing.T) {
 func TestDifferentRegNodes(t *testing.T) {
 	first_node := []string{"127.0.0.1:8502"}
 	c := NewRegServiceClient(first_node)
-	err := c.Register("test1", "node1")
+
+	full_addresses := []*RegServiceCommon.FullAddress{}
+	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: "node1"}
+	full_addresses = append(full_addresses, &grpc_full_address)
+
+	err := c.Register("test1", full_addresses)
 	if err != nil {
 		t.Fatalf("could not call Register: %v", err)
 		return
@@ -85,7 +97,7 @@ func TestDifferentRegNodes(t *testing.T) {
 
 	second_node := []string{"127.0.0.1:8503"}
 	c2 := NewRegServiceClient(second_node)
-	nodes, _ := c2.Discover("test1")
+	nodes, _ := c2.Discover("test1", "GRPC")
 	if len(nodes) == 0 {
 		t.Fatalf("expected 1 node")
 		return

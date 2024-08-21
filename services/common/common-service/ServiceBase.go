@@ -6,6 +6,7 @@ import (
 
 	common "github.com/TAULargeScaleWorkshop/RLAD/services/common"
 	RegServiceClient "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/client"
+	RegServiceCommon "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/common"
 	. "github.com/TAULargeScaleWorkshop/RLAD/utils"
 	"github.com/pebbe/zmq4"
 	"google.golang.org/grpc"
@@ -121,41 +122,48 @@ func startgRPC(listenPort int) (listeningAddress string, grpcServer *grpc.Server
 func Start(serviceName string, grpcListenPort int, regAddresses []string, bindgRPCToService func(s grpc.ServiceRegistrar),
 	messageHandler func(method string, parameters []byte) (response proto.Message, err error)) (err error) {
 	Logger.Printf("Start(%s, %d)\n", serviceName, grpcListenPort)
-	// start the service
+
+	// start the gRPC
 	listeningAddress, grpcServer, startListening, err := startgRPC(grpcListenPort)
 	if err != nil {
 		return err
 	}
 	bindgRPCToService(grpcServer)
 
-	//gRPC: make sure it registers to the registry service 
-	unregister := registerAddress(serviceName, regAddresses, listeningAddress)
-	defer unregister()
+	// create a list of full addresses
+	full_addresses := []*RegServiceCommon.FullAddress{}
+
+	// first, add the GRPC
+	grpc_full_address := RegServiceCommon.FullAddress{Protocol: "GRPC", Address: listeningAddress}
+	full_addresses = append(full_addresses, &grpc_full_address)
 
 	// mq
 	if messageHandler != nil {
-		serviceNameMQ := serviceName+"MQ"
 		start_mq, listening_address_mq := bindMQToService(0, messageHandler)
-		
-		//MQ: make sure it registers to the registry service 
-		unregister := registerAddress(serviceNameMQ, regAddresses, listening_address_mq)
-		defer unregister()
-		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceNameMQ, listening_address_mq)
+
+		// add MQ
+		mq_full_address := RegServiceCommon.FullAddress{Protocol: "MQ", Address: listening_address_mq}
+		full_addresses = append(full_addresses, &mq_full_address)
+
+		Logger.Printf("MQ: %s calling start_mq on %s\n", serviceName, listening_address_mq)
 		go start_mq()
 	}
+
+	unregister := registerAddress(serviceName, regAddresses, full_addresses)
+	defer unregister()
 
 	Logger.Printf("GRPC: %s starts listening on %s\n", serviceName, listeningAddress)
 	startListening()
 	return nil
 }
 
-func registerAddress(serviceName string, regAddresses []string, listeningAddress string) (unregister func()) {
+func registerAddress(serviceName string, regAddresses []string, full_addresses []*RegServiceCommon.FullAddress) (unregister func()) {
 	regClient := RegServiceClient.NewRegServiceClient(regAddresses)
-	err := regClient.Register(serviceName, listeningAddress)
+	err := regClient.Register(serviceName, full_addresses)
 	if err != nil {
 		Logger.Fatalf("Failed to register to registry service: %v", err)
 	}
 	return func() {
-		regClient.Unregister(serviceName, listeningAddress)
+		regClient.Unregister(serviceName, full_addresses)
 	}
 }

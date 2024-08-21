@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	servant "github.com/TAULargeScaleWorkshop/RLAD/services/reg-service/servant"
-
 	"github.com/TAULargeScaleWorkshop/RLAD/config"
 	"gopkg.in/yaml.v2"
 )
@@ -49,7 +47,7 @@ func TestMain(m *testing.M) {
 func TestRegisterUnregister(t *testing.T) {
 	c := NewRegServiceClient(conf.RegistryAddresses)
 
-	node_addresses := servant.NodeAddresses{}
+	node_addresses := map[string]string{}
 	node_addresses["GRPC"] = "node1"
 
 	err := c.Register("test1", node_addresses)
@@ -84,7 +82,7 @@ func TestDifferentRegNodes(t *testing.T) {
 	first_node := []string{"127.0.0.1:8502"}
 	c := NewRegServiceClient(first_node)
 
-	node_addresses := servant.NodeAddresses{}
+	node_addresses := map[string]string{}
 	node_addresses["GRPC"] = "node1"
 
 	err := c.Register("test1", node_addresses)

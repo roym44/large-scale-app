@@ -11,7 +11,7 @@ echo "Root directory is set to: $ROOT_DIR"
 LSA_TARGET=$ROOT_DIR/output/large-scale-workshop
 SERVICES_DIR=$ROOT_DIR/services
 LOGS_DIR=$ROOT_DIR/output/logs
-SLEEP_NUMBER=8
+SLEEP_NUMBER=10
 
 # Parameters:
 #   $1 - the service configuration (yaml) under services dir
